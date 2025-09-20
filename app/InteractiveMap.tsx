@@ -1,24 +1,100 @@
 import React, { useState } from "react";
 import {
-  View,
-  Text,
-  Modal,
-  TouchableOpacity,
-  Image,
-  StyleSheet,
+    Image,
+    Modal,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from "react-native";
-import Svg, { Rect } from "react-native-svg";
+import Svg, { G, Path, Rect } from "react-native-svg";
 
-type RegionId = "cara" | "ojoizquierdo" | "ojoderecho" | "boca";
+type RegionId = 
+  | "hall" 
+  | "pasillo" 
+  | "pecera" 
+  | "alumnos" 
+  | "buffet" 
+  | "sum" 
+  | "baños_mixtos" 
+  | "rectangle_28"
+  | "rectangle_35"
+  | "rectangle_37"
+  | "rectangle_39"
+  | "rectangle_40"
+  | "rectangle_41"
+  | "rectangle_8"
+  | "pasillo_2"
+  | "pasillo_3";
 
 const REGION_INFO: Record<
   RegionId,
   { nombre: string; desc?: string; foto?: any }
 > = {
-  cara: { nombre: "Cara", desc: "La base principal de la figura." },
-  ojoizquierdo: { nombre: "Ojo izquierdo", desc: "Este es el ojo izquierdo." },
-  ojoderecho: { nombre: "Ojo derecho", desc: "Este es el ojo derecho." },
-  boca: { nombre: "Boca", desc: "Aquí está la boca." },
+  hall: { 
+    nombre: "Hall Principal", 
+    desc: "Área de recepción y encuentro del campus." 
+  },
+  pasillo: { 
+    nombre: "Pasillo de Acceso", 
+    desc: "Corredor principal de entrada." 
+  },
+  pecera: { 
+    nombre: "Pecera", 
+    desc: "Aula con paredes de vidrio para reuniones y clases especiales." 
+  },
+  alumnos: { 
+    nombre: "Área de Alumnos", 
+    desc: "Espacio dedicado para estudiantes y actividades estudiantiles." 
+  },
+  buffet: { 
+    nombre: "Buffet", 
+    desc: "Cafetería y área de comidas del campus." 
+  },
+  sum: { 
+    nombre: "Salón de Usos Múltiples (SUM)", 
+    desc: "Auditorio para eventos, conferencias y actividades masivas." 
+  },
+  baños_mixtos: { 
+    nombre: "Baños Mixtos", 
+    desc: "Servicios sanitarios de uso general." 
+  },
+  rectangle_28: { 
+    nombre: "Área Auxiliar", 
+    desc: "Espacio de uso administrativo." 
+  },
+  rectangle_35: { 
+    nombre: "Oficina", 
+    desc: "Espacio de oficina administrativa." 
+  },
+  rectangle_37: { 
+    nombre: "Corredor", 
+    desc: "Pasillo de conexión entre áreas." 
+  },
+  rectangle_39: { 
+    nombre: "Área de Servicios", 
+    desc: "Zona destinada a servicios generales." 
+  },
+  rectangle_40: { 
+    nombre: "Pasillo Lateral", 
+    desc: "Corredor lateral de acceso." 
+  },
+  rectangle_41: { 
+    nombre: "Pasillo Lateral", 
+    desc: "Corredor lateral de acceso." 
+  },
+  rectangle_8: { 
+    nombre: "Depósito", 
+    desc: "Área de almacenamiento." 
+  },
+  pasillo_2: { 
+    nombre: "Pasillo Principal", 
+    desc: "Corredor principal de circulación." 
+  },
+  pasillo_3: { 
+    nombre: "Pasillo de Conexión", 
+    desc: "Corredor que conecta diferentes sectores." 
+  },
 };
 
 export default function InteractiveMap() {
@@ -26,56 +102,237 @@ export default function InteractiveMap() {
 
   return (
     <View style={{ flex: 1, backgroundColor: "#fff" }}>
-      <Svg width="100%" height="100%" viewBox="0 0 566 406">
-        {/* Fondo */}
-        <Rect width={566} height={406} fill="white" />
+      <Svg width="100%" height="100%" viewBox="0 0 488 539">
+        <G id="Group 1">
+          {/* Hall */}
+          <Rect
+            id="hall"
+            x={100}
+            y={363}
+            width={96}
+            height={126}
+            fill="#E8F4FD"
+            stroke="#2563eb"
+            strokeWidth={2}
+            onPress={() => setSelected("hall")}
+          />
 
-        {/* Cara */}
-        <Rect
-          id="cara"
-          x={24}
-          y={71}
-          width={519}
-          height={264}
-          fill="#D9D9D9"
-          onPress={() => setSelected("cara")}
-        />
+          {/* Pasillo */}
+          <Rect
+            id="pasillo"
+            x={0}
+            y={363}
+            width={100}
+            height={34}
+            fill="#F3F4F6"
+            stroke="#6B7280"
+            strokeWidth={1}
+            onPress={() => setSelected("pasillo")}
+          />
 
-        {/* Ojo izquierdo */}
-        <Rect
-          id="ojoizquierdo"
-          x={73}
-          y={99}
-          width={151}
-          height={92}
-          fill="#F63A3A"
-          onPress={() => setSelected("ojoizquierdo")}
-        />
+          {/* Pecera */}
+          <Rect
+            id="pecera"
+            x={103}
+            y={314}
+            width={69}
+            height={46}
+            fill="#FEF3C7"
+            stroke="#F59E0B"
+            strokeWidth={2}
+            onPress={() => setSelected("pecera")}
+          />
 
-        {/* Ojo derecho */}
-        <Rect
-          id="ojoderecho"
-          x={326}
-          y={93}
-          width={140}
-          height={87}
-          fill="#EDF943"
-          onPress={() => setSelected("ojoderecho")}
-        />
+          {/* Alumnos */}
+          <Rect
+            id="alumnos"
+            x={199}
+            y={320}
+            width={84}
+            height={95}
+            fill="#DBEAFE"
+            stroke="#3B82F6"
+            strokeWidth={2}
+            onPress={() => setSelected("alumnos")}
+          />
 
-        {/* Boca */}
-        <Rect
-          id="boca"
-          x={104}
-          y={227}
-          width={337}
-          height={65}
-          fill="#4D4B4B"
-          onPress={() => setSelected("boca")}
-        />
+          {/* Pasillo 2 */}
+          <Rect
+            id="pasillo_2"
+            x={196}
+            y={418}
+            width={292}
+            height={30}
+            fill="#F3F4F6"
+            stroke="#6B7280"
+            strokeWidth={1}
+            onPress={() => setSelected("pasillo_2")}
+          />
+
+          {/* Rectangle 8 */}
+          <Rect
+            id="rectangle_8"
+            x={143}
+            y={492}
+            width={75}
+            height={44}
+            fill="#F9FAFB"
+            stroke="#9CA3AF"
+            strokeWidth={1}
+            onPress={() => setSelected("rectangle_8")}
+          />
+
+          {/* Pasillo 3 */}
+          <Rect
+            id="pasillo_3"
+            x={175}
+            y={260}
+            width={21}
+            height={103}
+            fill="#F3F4F6"
+            stroke="#6B7280"
+            strokeWidth={1}
+            onPress={() => setSelected("pasillo_3")}
+          />
+
+          {/* Rectangle 28 */}
+          <Rect
+            id="rectangle_28"
+            x={100}
+            y={489}
+            width={40}
+            height={50}
+            fill="#F9FAFB"
+            stroke="#9CA3AF"
+            strokeWidth={1}
+            onPress={() => setSelected("rectangle_28")}
+          />
+
+          {/* Baños mixtos */}
+          <Rect
+            id="baños_mixtos"
+            x={332}
+            y={392}
+            width={63}
+            height={23}
+            fill="#FDE68A"
+            stroke="#D97706"
+            strokeWidth={1}
+            onPress={() => setSelected("baños_mixtos")}
+          />
+
+          {/* Rectangle 39 */}
+          <Rect
+            id="rectangle_39"
+            x={286}
+            y={392}
+            width={43}
+            height={23}
+            fill="#F9FAFB"
+            stroke="#9CA3AF"
+            strokeWidth={1}
+            onPress={() => setSelected("rectangle_39")}
+          />
+
+          {/* Rectangle 35 */}
+          <Rect
+            id="rectangle_35"
+            x={398}
+            y={369}
+            width={27}
+            height={46}
+            fill="#F9FAFB"
+            stroke="#9CA3AF"
+            strokeWidth={1}
+            onPress={() => setSelected("rectangle_35")}
+          />
+
+          {/* Rectangle 37 */}
+          <Rect
+            id="rectangle_37"
+            x={286}
+            y={369}
+            width={112}
+            height={20}
+            fill="#F3F4F6"
+            stroke="#6B7280"
+            strokeWidth={1}
+            onPress={() => setSelected("rectangle_37")}
+          />
+
+          {/* Rectangle 40 */}
+          <Rect
+            id="rectangle_40"
+            x={286}
+            y={183}
+            width={20}
+            height={186}
+            fill="#F3F4F6"
+            stroke="#6B7280"
+            strokeWidth={1}
+            onPress={() => setSelected("rectangle_40")}
+          />
+
+          {/* Rectangle 41 */}
+          <Rect
+            id="rectangle_41"
+            x={405}
+            y={183}
+            width={20}
+            height={186}
+            fill="#F3F4F6"
+            stroke="#6B7280"
+            strokeWidth={1}
+            onPress={() => setSelected("rectangle_41")}
+          />
+
+          {/* Buffet */}
+          <Rect
+            id="buffet"
+            x={309}
+            y={246}
+            width={93}
+            height={120}
+            fill="#FEE2E2"
+            stroke="#DC2626"
+            strokeWidth={2}
+            onPress={() => setSelected("buffet")}
+          />
+
+          {/* SUM */}
+          <Rect
+            id="sum"
+            x={309}
+            y={3}
+            width={93}
+            height={240}
+            fill="#ECFDF5"
+            stroke="#059669"
+            strokeWidth={2}
+            onPress={() => setSelected("sum")}
+          />
+
+          {/* Paredes (decorativas - no interactivas) */}
+          <Path
+            id="Paredes"
+            d="M98.5 451C99.3284 451 100 451.672 100 452.5V537.5C100 538.328 99.3284 539 98.5 539C97.6716 539 97 538.328 97 537.5V452.5C97 451.672 97.6716 451 98.5 451ZM263.5 448C263.885 448 264.235 448.146 264.5 448.384C264.765 448.146 265.115 448 265.5 448C266.328 448 267 448.672 267 449.5V537.5C267 538.328 266.328 539 265.5 539H141.5C140.672 539 140 538.328 140 537.5V490.5C140 489.672 140.672 489 141.5 489H184.5C185.328 489 186 489.672 186 490.5C186 491.328 185.328 492 184.5 492H143V536H218V492H197.5C196.672 492 196 491.328 196 490.5C196 489.672 196.672 489 197.5 489H219.5C220.328 489 221 489.672 221 490.5V536H264V450.912C263.843 450.968 263.676 451 263.5 451H199V477.5C199 478.328 198.328 479 197.5 479C196.672 479 196 478.328 196 477.5V449.5C196 448.672 196.672 448 197.5 448H263.5ZM98.5 431C99.3284 431 100 431.672 100 432.5V439.5C100 440.328 99.3284 441 98.5 441C97.6716 441 97 440.328 97 439.5V432.5C97 431.672 97.6716 431 98.5 431ZM284.5 317C285.328 317 286 317.672 286 318.5V389H317.5C318.328 389 319 389.672 319 390.5C319 391.328 318.328 392 317.5 392H286V415H329V390.5C329 390.448 329.003 390.397 329.008 390.347C329.085 389.59 329.723 389 330.5 389H396.5C397.277 389 397.915 389.59 397.992 390.347C397.997 390.397 398 390.448 398 390.5V416.5C398 417.328 397.328 418 396.5 418H343.5C342.672 418 342 417.328 342 416.5C342 415.672 342.672 415 343.5 415H395V392H332V416.5C332 417.328 331.328 418 330.5 418H197.5C196.672 418 196 417.328 196 416.5C196 415.672 196.672 415 197.5 415H283V320H199V403.5C199 404.328 198.328 405 197.5 405C196.672 405 196 404.328 196 403.5V318.5C196 318.448 196.003 318.397 196.008 318.347C196.085 317.59 196.723 317 197.5 317H284.5ZM426.5 310C427.328 310 428 310.672 428 311.5V416.5C428 417.328 427.328 418 426.5 418H409.5C408.672 418 408 417.328 408 416.5C408 415.672 408.672 415 409.5 415H425V311.5C425 310.672 425.672 310 426.5 310ZM98.5 397C99.3284 397 100 397.672 100 398.5V413.5C100 414.328 99.3284 415 98.5 415C97.6716 415 97 414.328 97 413.5V400H1.5C0.671573 400 0 399.328 0 398.5C0 397.672 0.671573 397 1.5 397H98.5ZM343.5 0C344.328 0 345 0.671573 345 1.5C345 2.32843 344.328 3 343.5 3H309V243H403.5C404.328 243 405 243.672 405 244.5V367.5C405 368.328 404.328 369 403.5 369C402.672 369 402 368.328 402 367.5V246H309V366H390.5C391.328 366 392 366.672 392 367.5C392 368.328 391.328 369 390.5 369H307.5C306.672 369 306 368.328 306 367.5V1.5C306 1.44824 306.003 1.39709 306.008 1.34668C306.085 0.590277 306.723 0 307.5 0H343.5ZM173.5 311C174.328 311 175 311.672 175 312.5V361.5C175 362.328 174.328 363 173.5 363C172.672 363 172 362.328 172 361.5V314H103V360H160.5C161.328 360 162 360.672 162 361.5C162 362.328 161.328 363 160.5 363H1.5C0.671575 363 0 362.328 0 361.5C0 360.672 0.671573 360 1.5 360H100V312.5C100 312.448 100.003 312.397 100.008 312.347C100.085 311.59 100.723 311 101.5 311H173.5ZM403.5 0C404.328 0 405 0.671573 405 1.5V221.5C405 222.328 404.328 223 403.5 223C402.672 223 402 222.328 402 221.5V3H393.5C392.672 3 392 2.32843 392 1.5C392 0.671573 392.672 0 393.5 0H403.5ZM363.5 0C364.328 0 365 0.671573 365 1.5C365 2.32843 364.328 3 363.5 3H356.5C355.672 3 355 2.32843 355 1.5C355 0.671573 355.672 6.4426e-08 356.5 0H363.5Z"
+            fill="#DC2626"
+            stroke="#991B1B"
+            strokeWidth={0.5}
+          />
+
+          {/* Área auxiliar blanca */}
+          <Path
+            id="no_se"
+            d="M264 536H221V489H199V451H264V536Z"
+            fill="white"
+            stroke="#E5E7EB"
+            strokeWidth={1}
+          />
+        </G>
       </Svg>
 
-      {/* Modal con info */}
+      {/* Modal con información */}
       <Modal visible={!!selected} transparent animationType="fade">
         <View style={styles.overlay}>
           <View style={styles.modal}>
@@ -118,16 +375,19 @@ const styles = StyleSheet.create({
     width: "85%",
     borderRadius: 14,
     padding: 16,
+    maxHeight: "80%",
   },
   title: {
     fontSize: 18,
     fontWeight: "bold",
     marginBottom: 8,
+    textAlign: "center",
   },
   desc: {
     marginVertical: 10,
     fontSize: 14,
     color: "#333",
+    textAlign: "center",
   },
   image: {
     width: "100%",
