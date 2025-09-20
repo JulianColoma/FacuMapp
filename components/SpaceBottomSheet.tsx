@@ -240,7 +240,8 @@ export default function SpaceBottomSheet({ selectedSpace, onClose }: SpaceBottom
                 </View>
               </View>
             )}
-          </View>
+          </ScrollView>
+      </View>
     </Animated.View>
   );
 }
