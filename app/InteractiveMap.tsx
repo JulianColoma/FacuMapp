@@ -1,13 +1,7 @@
 import React, { useState } from "react";
-import {
-    Image,
-    Modal,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
-} from "react-native";
+import { View } from "react-native";
 import Svg, { G, Path, Rect } from "react-native-svg";
+import SpaceBottomSheet from "../components/SpaceBottomSheet";
 
 type RegionId = 
   | "hall" 
@@ -27,78 +21,16 @@ type RegionId =
   | "pasillo_2"
   | "pasillo_3";
 
-const REGION_INFO: Record<
-  RegionId,
-  { nombre: string; desc?: string; foto?: any }
-> = {
-  hall: { 
-    nombre: "Hall Principal", 
-    desc: "Área de recepción y encuentro del campus." 
-  },
-  pasillo: { 
-    nombre: "Pasillo de Acceso", 
-    desc: "Corredor principal de entrada." 
-  },
-  pecera: { 
-    nombre: "Pecera", 
-    desc: "Aula con paredes de vidrio para reuniones y clases especiales." 
-  },
-  alumnos: { 
-    nombre: "Área de Alumnos", 
-    desc: "Espacio dedicado para estudiantes y actividades estudiantiles." 
-  },
-  buffet: { 
-    nombre: "Buffet", 
-    desc: "Cafetería y área de comidas del campus." 
-  },
-  sum: { 
-    nombre: "Salón de Usos Múltiples (SUM)", 
-    desc: "Auditorio para eventos, conferencias y actividades masivas." 
-  },
-  baños_mixtos: { 
-    nombre: "Baños Mixtos", 
-    desc: "Servicios sanitarios de uso general." 
-  },
-  rectangle_28: { 
-    nombre: "Área Auxiliar", 
-    desc: "Espacio de uso administrativo." 
-  },
-  rectangle_35: { 
-    nombre: "Oficina", 
-    desc: "Espacio de oficina administrativa." 
-  },
-  rectangle_37: { 
-    nombre: "Corredor", 
-    desc: "Pasillo de conexión entre áreas." 
-  },
-  rectangle_39: { 
-    nombre: "Área de Servicios", 
-    desc: "Zona destinada a servicios generales." 
-  },
-  rectangle_40: { 
-    nombre: "Pasillo Lateral", 
-    desc: "Corredor lateral de acceso." 
-  },
-  rectangle_41: { 
-    nombre: "Pasillo Lateral", 
-    desc: "Corredor lateral de acceso." 
-  },
-  rectangle_8: { 
-    nombre: "Depósito", 
-    desc: "Área de almacenamiento." 
-  },
-  pasillo_2: { 
-    nombre: "Pasillo Principal", 
-    desc: "Corredor principal de circulación." 
-  },
-  pasillo_3: { 
-    nombre: "Pasillo de Conexión", 
-    desc: "Corredor que conecta diferentes sectores." 
-  },
-};
-
 export default function InteractiveMap() {
   const [selected, setSelected] = useState<RegionId | null>(null);
+
+  const handleSpacePress = (regionId: RegionId) => {
+    setSelected(regionId);
+  };
+
+  const handleCloseBottomSheet = () => {
+    setSelected(null);
+  };
 
   return (
     <View style={{ flex: 1, backgroundColor: "#fff" }}>
@@ -114,7 +46,7 @@ export default function InteractiveMap() {
             fill="#E8F4FD"
             stroke="#2563eb"
             strokeWidth={2}
-            onPress={() => setSelected("hall")}
+            onPress={() => handleSpacePress("hall")}
           />
 
           {/* Pasillo */}
@@ -127,7 +59,7 @@ export default function InteractiveMap() {
             fill="#F3F4F6"
             stroke="#6B7280"
             strokeWidth={1}
-            onPress={() => setSelected("pasillo")}
+            onPress={() => handleSpacePress("pasillo")}
           />
 
           {/* Pecera */}
@@ -140,7 +72,7 @@ export default function InteractiveMap() {
             fill="#FEF3C7"
             stroke="#F59E0B"
             strokeWidth={2}
-            onPress={() => setSelected("pecera")}
+            onPress={() => handleSpacePress("pecera")}
           />
 
           {/* Alumnos */}
@@ -153,7 +85,7 @@ export default function InteractiveMap() {
             fill="#DBEAFE"
             stroke="#3B82F6"
             strokeWidth={2}
-            onPress={() => setSelected("alumnos")}
+            onPress={() => handleSpacePress("alumnos")}
           />
 
           {/* Pasillo 2 */}
@@ -166,7 +98,7 @@ export default function InteractiveMap() {
             fill="#F3F4F6"
             stroke="#6B7280"
             strokeWidth={1}
-            onPress={() => setSelected("pasillo_2")}
+            onPress={() => handleSpacePress("pasillo_2")}
           />
 
           {/* Rectangle 8 */}
@@ -179,7 +111,7 @@ export default function InteractiveMap() {
             fill="#F9FAFB"
             stroke="#9CA3AF"
             strokeWidth={1}
-            onPress={() => setSelected("rectangle_8")}
+            onPress={() => handleSpacePress("rectangle_8")}
           />
 
           {/* Pasillo 3 */}
@@ -192,7 +124,7 @@ export default function InteractiveMap() {
             fill="#F3F4F6"
             stroke="#6B7280"
             strokeWidth={1}
-            onPress={() => setSelected("pasillo_3")}
+            onPress={() => handleSpacePress("pasillo_3")}
           />
 
           {/* Rectangle 28 */}
@@ -205,7 +137,7 @@ export default function InteractiveMap() {
             fill="#F9FAFB"
             stroke="#9CA3AF"
             strokeWidth={1}
-            onPress={() => setSelected("rectangle_28")}
+            onPress={() => handleSpacePress("rectangle_28")}
           />
 
           {/* Baños mixtos */}
@@ -218,7 +150,7 @@ export default function InteractiveMap() {
             fill="#FDE68A"
             stroke="#D97706"
             strokeWidth={1}
-            onPress={() => setSelected("baños_mixtos")}
+            onPress={() => handleSpacePress("baños_mixtos")}
           />
 
           {/* Rectangle 39 */}
@@ -231,7 +163,7 @@ export default function InteractiveMap() {
             fill="#F9FAFB"
             stroke="#9CA3AF"
             strokeWidth={1}
-            onPress={() => setSelected("rectangle_39")}
+            onPress={() => handleSpacePress("rectangle_39")}
           />
 
           {/* Rectangle 35 */}
@@ -244,7 +176,7 @@ export default function InteractiveMap() {
             fill="#F9FAFB"
             stroke="#9CA3AF"
             strokeWidth={1}
-            onPress={() => setSelected("rectangle_35")}
+            onPress={() => handleSpacePress("rectangle_35")}
           />
 
           {/* Rectangle 37 */}
@@ -257,7 +189,7 @@ export default function InteractiveMap() {
             fill="#F3F4F6"
             stroke="#6B7280"
             strokeWidth={1}
-            onPress={() => setSelected("rectangle_37")}
+            onPress={() => handleSpacePress("rectangle_37")}
           />
 
           {/* Rectangle 40 */}
@@ -270,7 +202,7 @@ export default function InteractiveMap() {
             fill="#F3F4F6"
             stroke="#6B7280"
             strokeWidth={1}
-            onPress={() => setSelected("rectangle_40")}
+            onPress={() => handleSpacePress("rectangle_40")}
           />
 
           {/* Rectangle 41 */}
@@ -283,7 +215,7 @@ export default function InteractiveMap() {
             fill="#F3F4F6"
             stroke="#6B7280"
             strokeWidth={1}
-            onPress={() => setSelected("rectangle_41")}
+            onPress={() => handleSpacePress("rectangle_41")}
           />
 
           {/* Buffet */}
@@ -296,7 +228,7 @@ export default function InteractiveMap() {
             fill="#FEE2E2"
             stroke="#DC2626"
             strokeWidth={2}
-            onPress={() => setSelected("buffet")}
+            onPress={() => handleSpacePress("buffet")}
           />
 
           {/* SUM */}
@@ -309,7 +241,7 @@ export default function InteractiveMap() {
             fill="#ECFDF5"
             stroke="#059669"
             strokeWidth={2}
-            onPress={() => setSelected("sum")}
+            onPress={() => handleSpacePress("sum")}
           />
 
           {/* Paredes (decorativas - no interactivas) */}
@@ -332,75 +264,11 @@ export default function InteractiveMap() {
         </G>
       </Svg>
 
-      {/* Modal con información */}
-      <Modal visible={!!selected} transparent animationType="fade">
-        <View style={styles.overlay}>
-          <View style={styles.modal}>
-            <Text style={styles.title}>
-              {selected ? REGION_INFO[selected].nombre : ""}
-            </Text>
-            {selected && REGION_INFO[selected].foto && (
-              <Image
-                source={REGION_INFO[selected].foto}
-                style={styles.image}
-                resizeMode="cover"
-              />
-            )}
-            <Text style={styles.desc}>
-              {selected ? REGION_INFO[selected].desc : ""}
-            </Text>
-
-            <TouchableOpacity
-              onPress={() => setSelected(null)}
-              style={styles.closeBtn}
-            >
-              <Text style={styles.closeText}>Cerrar</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
+      {/* Bottom Sheet */}
+      <SpaceBottomSheet 
+        selectedSpace={selected} 
+        onClose={handleCloseBottomSheet} 
+      />
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  overlay: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.5)",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  modal: {
-    backgroundColor: "#fff",
-    width: "85%",
-    borderRadius: 14,
-    padding: 16,
-    maxHeight: "80%",
-  },
-  title: {
-    fontSize: 18,
-    fontWeight: "bold",
-    marginBottom: 8,
-    textAlign: "center",
-  },
-  desc: {
-    marginVertical: 10,
-    fontSize: 14,
-    color: "#333",
-    textAlign: "center",
-  },
-  image: {
-    width: "100%",
-    height: 150,
-    marginVertical: 8,
-    borderRadius: 8,
-  },
-  closeBtn: {
-    alignSelf: "flex-end",
-    marginTop: 8,
-  },
-  closeText: {
-    color: "#2563eb",
-    fontWeight: "600",
-  },
-});
