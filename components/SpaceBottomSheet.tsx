@@ -13,23 +13,8 @@ import {
 const { height: SCREEN_HEIGHT } = Dimensions.get("window");
 const MAX_TRANSLATE_Y = -SCREEN_HEIGHT * 0.75; // 75% de la pantalla
 
-type RegionId = 
-  | "hall" 
-  | "pasillo" 
-  | "pecera" 
-  | "alumnos" 
-  | "buffet" 
-  | "sum" 
-  | "baños_mixtos" 
-  | "rectangle_28"
-  | "rectangle_35"
-  | "rectangle_37"
-  | "rectangle_39"
-  | "rectangle_40"
-  | "rectangle_41"
-  | "rectangle_8"
-  | "pasillo_2"
-  | "pasillo_3";
+// Permitimos cualquier id de región como string para soportar todos los elementos del SVG
+type RegionId = string;
 
 interface SpaceInfo {
   nombre: string;
@@ -38,7 +23,8 @@ interface SpaceInfo {
   categorias?: string[];
 }
 
-const REGION_INFO: Record<RegionId, SpaceInfo> = {
+// Información por defecto para algunas regiones; se puede ampliar.
+const REGION_INFO: Record<string, SpaceInfo> = {
   hall: { 
     nombre: "Hall Principal", 
     desc: "Espacio amplio y luminoso que conecta los pabellones principales. Se usa para exposiciones, desfiles y eventos de diseño.",
@@ -119,10 +105,47 @@ const REGION_INFO: Record<RegionId, SpaceInfo> = {
     desc: "Corredor que conecta diferentes sectores.",
     categorias: ["Estructura"]
   },
+  // Peceras auxiliares
+  pecera_2: { nombre: "Pecera 2", desc: "Módulo auxiliar destinado a pequeñas reuniones y trabajos prácticos.", categorias: ["Aula"] },
+  pecera_3: { nombre: "Pecera 3", desc: "Módulo auxiliar destinado a tareas académicas.", categorias: ["Aula"] },
+  pecera_4: { nombre: "Pecera 4", desc: "Espacio de trabajo pequeño.", categorias: ["Aula"] },
+  pecera_5: { nombre: "Pecera 5", desc: "Módulo de apoyo docente.", categorias: ["Aula"] },
+  pecera_6: { nombre: "Pecera 6", desc: "Módulo de apoyo docente.", categorias: ["Aula"] },
+  pecera_7: { nombre: "Pecera 7", desc: "Área polivalente para actividades cortas.", categorias: ["Aula"] },
+  pecera_8: { nombre: "Pecera 8", desc: "Pequeño módulo auxiliar.", categorias: ["Aula"] },
+  pecera_9: { nombre: "Pecera 9", desc: "Pequeño módulo auxiliar.", categorias: ["Aula"] },
+  pecera_10: { nombre: "Pecera 10", desc: "Pequeño módulo auxiliar.", categorias: ["Aula"] },
+  pecera_11: { nombre: "Pecera 11", desc: "Pequeño módulo auxiliar.", categorias: ["Aula"] },
+  pecera_12: { nombre: "Pecera 12", desc: "Pequeño módulo auxiliar.", categorias: ["Aula"] },
+  pecera_13: { nombre: "Pecera 13", desc: "Pequeño módulo auxiliar.", categorias: ["Aula"] },
+  pecera_14: { nombre: "Pecera 14", desc: "Pequeño módulo auxiliar.", categorias: ["Aula"] },
+  pecera_15: { nombre: "Pecera 15", desc: "Pequeño módulo auxiliar.", categorias: ["Aula"] },
+  pecera_16: { nombre: "Pecera 16", desc: "Pequeño módulo auxiliar.", categorias: ["Aula"] },
+  pecera_17: { nombre: "Pecera 17", desc: "Pequeño módulo auxiliar.", categorias: ["Aula"] },
+  pecera_18: { nombre: "Pecera 18", desc: "Pequeño módulo auxiliar.", categorias: ["Aula"] },
+  pecera_19: { nombre: "Pecera 19", desc: "Pequeño módulo auxiliar.", categorias: ["Aula"] },
+
+  // Rectangles derechos/superiores
+  rectangle_149: { nombre: "Sala 149", desc: "Sala multiuso ubicada en el sector derecho del plano.", categorias: ["Estructura"] },
+  rectangle_150: { nombre: "Sala 150", desc: "Sala multiuso.", categorias: ["Estructura"] },
+  rectangle_151: { nombre: "Sala 151", desc: "Sala auxiliar pequeña.", categorias: ["Estructura"] },
+  rectangle_152: { nombre: "Sala 152", desc: "Sala auxiliar.", categorias: ["Estructura"] },
+  rectangle_153: { nombre: "Sala 153", desc: "Sala auxiliar.", categorias: ["Estructura"] },
+  rectangle_154: { nombre: "Sala 154", desc: "Sala auxiliar.", categorias: ["Estructura"] },
+  rectangle_155: { nombre: "Sala 155", desc: "Sala auxiliar.", categorias: ["Estructura"] },
+  rectangle_156: { nombre: "Sala 156", desc: "Sala auxiliar.", categorias: ["Estructura"] },
+  rectangle_157: { nombre: "Sala 157", desc: "Sala auxiliar.", categorias: ["Estructura"] },
+  rectangle_158: { nombre: "Sala 158", desc: "Sala auxiliar.", categorias: ["Estructura"] },
+  anfiteatro_fisica: { nombre: "Anfiteatro Física", desc: "Anfiteatro", categorias: ["Estructura"] },
+
+  // Pequeños módulos alrededor del buffet
+  rectangle_53: { nombre: "Módulo 53", desc: "Espacio de servicio o instalación auxiliar.", categorias: ["Estructura"] },
+  rectangle_56: { nombre: "Módulo 56", desc: "Espacio de servicio o instalación auxiliar.", categorias: ["Estructura"] },
+  rectangle_58: { nombre: "Módulo 58", desc: "Instalación lateral auxiliar.", categorias: ["Estructura"] },
 };
 
 interface SpaceBottomSheetProps {
-  selectedSpace: RegionId | null;
+  selectedSpace: string | null;
   onClose: () => void;
 }
 
@@ -185,7 +208,11 @@ export default function SpaceBottomSheet({ selectedSpace, onClose }: SpaceBottom
 
   if (!selectedSpace) return null;
 
-  const spaceInfo = REGION_INFO[selectedSpace];
+  // Soporte para cualquier id: si no hay info, mostramos un fallback
+  const spaceInfo: SpaceInfo = REGION_INFO[selectedSpace] ?? {
+    nombre: selectedSpace,
+    desc: "Información no disponible para este espacio.",
+  };
 
   return (
     <Animated.View
