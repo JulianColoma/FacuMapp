@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { View } from "react-native";
 import Svg, { G, Path, Rect } from "react-native-svg";
-import SpaceBottomSheet from "../components/SpaceBottomSheet";
+import SpaceBottomSheet from "./SpaceBottomSheet";
 
 // Soportar cualquier id del SVG como string para permitir interactividad completa
 type RegionId = string;
