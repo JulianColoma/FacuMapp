@@ -54,15 +54,15 @@ export default function Searchbar({
 const styles = {
   container: {
     paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingVertical: 8,
   },
   searchBar: {
     flexDirection: "row" as const,
     alignItems: "center" as const,
     backgroundColor: "#FFFFFF",
-    borderRadius: 12,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
+    borderRadius: 24,
+    paddingHorizontal: 16,  
+    paddingVertical: 8,  
     shadowColor: "#000",
     shadowOffset: {
       width: 0,
@@ -77,7 +77,7 @@ const styles = {
   },
   input: {
     flex: 1,
-    fontSize: 16,
+    fontSize: 15,  
     color: "#1F2937",
   },
   clearButton: {

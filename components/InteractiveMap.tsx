@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { View } from "react-native";
 import Svg, { G, Path, Rect } from "react-native-svg";
+import Searchbar from "./Searchbar";
 import SpaceBottomSheet from "./SpaceBottomSheet";
 
 // Soportar cualquier id del SVG como string para permitir interactividad completa
@@ -8,6 +9,7 @@ type RegionId = string;
 
 export default function InteractiveMap() {
   const [selected, setSelected] = useState<RegionId | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const handleSpacePress = (regionId: RegionId) => {
     setSelected(regionId);
@@ -17,8 +19,14 @@ export default function InteractiveMap() {
     setSelected(null);
   };
 
+  const handleSearchChange = (text: string) => {
+    setSearchQuery(text);
+    console.log("Búsqueda:", text);
+  };
+
   return (
-    <View style={{ flex: 1, backgroundColor: "#fff" }}>
+    <View style={styles.container}>
+      {/* Mapa SVG */}
       {/* Usamos el viewBox del archivo Plano.html para mantener escala y posiciones */}
       <Svg width="100%" height="100%" viewBox="0 0 539 1126">
         <G id="Group 1">
@@ -541,6 +549,11 @@ export default function InteractiveMap() {
         </G>
       </Svg>
 
+      {/* Searchbar flotante encima del mapa */}
+      <View style={styles.searchbarContainer}>
+        <Searchbar onSearchChange={handleSearchChange} />
+      </View>
+
       {/* Bottom Sheet */}
       <SpaceBottomSheet
         selectedSpace={selected}
@@ -549,3 +562,17 @@ export default function InteractiveMap() {
     </View>
   );
 }
+
+const styles = {
+  container: {
+    flex: 1,
+    backgroundColor: "#fff",
+  },
+  searchbarContainer: {
+    position: "absolute" as const,
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 10,
+},
+};
