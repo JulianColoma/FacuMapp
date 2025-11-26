@@ -11,7 +11,7 @@ import {
 } from "react-native";
 
 const { height: SCREEN_HEIGHT } = Dimensions.get("window");
-const MAX_TRANSLATE_Y = -SCREEN_HEIGHT * 0.75; // 75% de la pantalla
+const MAX_TRANSLATE_Y = -SCREEN_HEIGHT * 0.90; // 90% de la pantalla
 
 // Permitimos cualquier id de región como string para soportar todos los elementos del SVG
 type RegionId = string;
@@ -160,7 +160,7 @@ export default function SpaceBottomSheet({ selectedSpace, onClose }: SpaceBottom
 
   useEffect(() => {
     if (selectedSpace) {
-      // Animar hacia arriba al 75% cuando se selecciona un espacio
+      // Animar hacia arriba al 90% cuando se selecciona un espacio
       Animated.spring(translateY, {
         toValue: MAX_TRANSLATE_Y,
         useNativeDriver: true,
@@ -181,7 +181,7 @@ export default function SpaceBottomSheet({ selectedSpace, onClose }: SpaceBottom
       
       onPanResponderMove: (event, gestureState) => {
         const { dy } = gestureState;
-        // Limitar el movimiento: no puede subir más del 75%
+        // Limitar el movimiento: no puede subir más del 90%
         const newTranslateY = Math.min(0, Math.max(MAX_TRANSLATE_Y + dy, MAX_TRANSLATE_Y));
         translateY.setValue(newTranslateY);
       },
@@ -196,7 +196,7 @@ export default function SpaceBottomSheet({ selectedSpace, onClose }: SpaceBottom
             useNativeDriver: true,
           }).start(() => onClose());
         } else {
-          // Volver al 75%
+          // Volver al 90%
           Animated.spring(translateY, {
             toValue: MAX_TRANSLATE_Y,
             useNativeDriver: true,
@@ -281,8 +281,8 @@ const styles = StyleSheet.create({
     right: 0,
     height: SCREEN_HEIGHT,
     backgroundColor: "white",
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
+    borderTopLeftRadius: 30,
+    borderTopRightRadius: 30,
     shadowColor: "#000",
     shadowOffset: {
       width: 0,
