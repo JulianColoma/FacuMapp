@@ -1,12 +1,14 @@
-const API_URL = 'http://192.168.0.168:3000';
+const API_URL = 'http://192.168.0.175:3000';
 
 export interface Espacio {
   id: number;
   nombre: string;
-  descripcion?: string;
+  descripcion: string;
+  imagen: string;
+  categorias?: any[];  // ← Agregar esta propiedad
 }
 
-export const getEspacios = async () => {
+export const getEspacios = async (): Promise<Espacio[]> => {
   try {
     const response = await fetch(`${API_URL}/espacio`);
     const data = await response.json();

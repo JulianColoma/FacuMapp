@@ -7,8 +7,10 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  TouchableOpacity,
   View,
 } from "react-native";
+import { Espacio } from "../services/api";
 
 const { height: SCREEN_HEIGHT } = Dimensions.get("window");
 const MAX_TRANSLATE_Y = -SCREEN_HEIGHT * 0.90; // 90% de la pantalla
@@ -23,129 +25,8 @@ interface SpaceInfo {
   categorias?: string[];
 }
 
-// Información por defecto para algunas regiones; se puede ampliar.
-const REGION_INFO: Record<string, SpaceInfo> = {
-  hall: { 
-    nombre: "Hall Principal", 
-    desc: "Espacio amplio y luminoso que conecta los pabellones principales. Se usa para exposiciones, desfiles y eventos de diseño.",
-    categorias: ["Estructura"]
-  },
-  pasillo: { 
-    nombre: "Pasillo de Acceso", 
-    desc: "Corredor principal de entrada al edificio.",
-    categorias: ["Estructura"]
-  },
-  pecera: { 
-    nombre: "Pecera", 
-    desc: "Aula con paredes de vidrio para reuniones y clases especiales.",
-    categorias: ["Aula", "Estructura"]
-  },
-  alumnos: { 
-    nombre: "Área de Alumnos", 
-    desc: "Espacio dedicado para estudiantes y actividades estudiantiles.",
-    categorias: ["Afuera"]
-  },
-  buffet: { 
-    nombre: "Buffet", 
-    desc: "Cafetería y área de comidas del campus.",
-    categorias: ["Afuera"]
-  },
-  sum: { 
-    nombre: "Salón de Usos Múltiples (SUM)", 
-    desc: "Auditorio para eventos, conferencias y actividades masivas.",
-    categorias: ["Aula"]
-  },
-  baños_mixtos: { 
-    nombre: "Baños Mixtos", 
-    desc: "Servicios sanitarios de uso general.",
-    categorias: ["Estructura"]
-  },
-  rectangle_28: { 
-    nombre: "Área Auxiliar", 
-    desc: "Espacio de uso administrativo.",
-    categorias: ["Estructura"]
-  },
-  rectangle_35: { 
-    nombre: "Oficina", 
-    desc: "Espacio de oficina administrativa.",
-    categorias: ["Estructura"]
-  },
-  rectangle_37: { 
-    nombre: "Corredor", 
-    desc: "Pasillo de conexión entre áreas.",
-    categorias: ["Estructura"]
-  },
-  rectangle_39: { 
-    nombre: "Área de Servicios", 
-    desc: "Zona destinada a servicios generales.",
-    categorias: ["Estructura"]
-  },
-  rectangle_40: { 
-    nombre: "Pasillo Lateral", 
-    desc: "Corredor lateral de acceso.",
-    categorias: ["Estructura"]
-  },
-  rectangle_41: { 
-    nombre: "Pasillo Lateral", 
-    desc: "Corredor lateral de acceso.",
-    categorias: ["Estructura"]
-  },
-  rectangle_8: { 
-    nombre: "Depósito", 
-    desc: "Área de almacenamiento.",
-    categorias: ["Estructura"]
-  },
-  pasillo_2: { 
-    nombre: "Pasillo Principal", 
-    desc: "Corredor principal de circulación.",
-    categorias: ["Estructura"]
-  },
-  pasillo_3: { 
-    nombre: "Pasillo de Conexión", 
-    desc: "Corredor que conecta diferentes sectores.",
-    categorias: ["Estructura"]
-  },
-  // Peceras auxiliares
-  pecera_2: { nombre: "Pecera 2", desc: "Módulo auxiliar destinado a pequeñas reuniones y trabajos prácticos.", categorias: ["Aula"] },
-  pecera_3: { nombre: "Pecera 3", desc: "Módulo auxiliar destinado a tareas académicas.", categorias: ["Aula"] },
-  pecera_4: { nombre: "Pecera 4", desc: "Espacio de trabajo pequeño.", categorias: ["Aula"] },
-  pecera_5: { nombre: "Pecera 5", desc: "Módulo de apoyo docente.", categorias: ["Aula"] },
-  pecera_6: { nombre: "Pecera 6", desc: "Módulo de apoyo docente.", categorias: ["Aula"] },
-  pecera_7: { nombre: "Pecera 7", desc: "Área polivalente para actividades cortas.", categorias: ["Aula"] },
-  pecera_8: { nombre: "Pecera 8", desc: "Pequeño módulo auxiliar.", categorias: ["Aula"] },
-  pecera_9: { nombre: "Pecera 9", desc: "Pequeño módulo auxiliar.", categorias: ["Aula"] },
-  pecera_10: { nombre: "Pecera 10", desc: "Pequeño módulo auxiliar.", categorias: ["Aula"] },
-  pecera_11: { nombre: "Pecera 11", desc: "Pequeño módulo auxiliar.", categorias: ["Aula"] },
-  pecera_12: { nombre: "Pecera 12", desc: "Pequeño módulo auxiliar.", categorias: ["Aula"] },
-  pecera_13: { nombre: "Pecera 13", desc: "Pequeño módulo auxiliar.", categorias: ["Aula"] },
-  pecera_14: { nombre: "Pecera 14", desc: "Pequeño módulo auxiliar.", categorias: ["Aula"] },
-  pecera_15: { nombre: "Pecera 15", desc: "Pequeño módulo auxiliar.", categorias: ["Aula"] },
-  pecera_16: { nombre: "Pecera 16", desc: "Pequeño módulo auxiliar.", categorias: ["Aula"] },
-  pecera_17: { nombre: "Pecera 17", desc: "Pequeño módulo auxiliar.", categorias: ["Aula"] },
-  pecera_18: { nombre: "Pecera 18", desc: "Pequeño módulo auxiliar.", categorias: ["Aula"] },
-  pecera_19: { nombre: "Pecera 19", desc: "Pequeño módulo auxiliar.", categorias: ["Aula"] },
-
-  // Rectangles derechos/superiores
-  rectangle_149: { nombre: "Sala 149", desc: "Sala multiuso ubicada en el sector derecho del plano.", categorias: ["Estructura"] },
-  rectangle_150: { nombre: "Sala 150", desc: "Sala multiuso.", categorias: ["Estructura"] },
-  rectangle_151: { nombre: "Sala 151", desc: "Sala auxiliar pequeña.", categorias: ["Estructura"] },
-  rectangle_152: { nombre: "Sala 152", desc: "Sala auxiliar.", categorias: ["Estructura"] },
-  rectangle_153: { nombre: "Sala 153", desc: "Sala auxiliar.", categorias: ["Estructura"] },
-  rectangle_154: { nombre: "Sala 154", desc: "Sala auxiliar.", categorias: ["Estructura"] },
-  rectangle_155: { nombre: "Sala 155", desc: "Sala auxiliar.", categorias: ["Estructura"] },
-  rectangle_156: { nombre: "Sala 156", desc: "Sala auxiliar.", categorias: ["Estructura"] },
-  rectangle_157: { nombre: "Sala 157", desc: "Sala auxiliar.", categorias: ["Estructura"] },
-  rectangle_158: { nombre: "Sala 158", desc: "Sala auxiliar.", categorias: ["Estructura"] },
-  anfiteatro_fisica: { nombre: "Anfiteatro Física", desc: "Anfiteatro", categorias: ["Estructura"] },
-
-  // Pequeños módulos alrededor del buffet
-  rectangle_53: { nombre: "Módulo 53", desc: "Espacio de servicio o instalación auxiliar.", categorias: ["Estructura"] },
-  rectangle_56: { nombre: "Módulo 56", desc: "Espacio de servicio o instalación auxiliar.", categorias: ["Estructura"] },
-  rectangle_58: { nombre: "Módulo 58", desc: "Instalación lateral auxiliar.", categorias: ["Estructura"] },
-};
-
 interface SpaceBottomSheetProps {
-  selectedSpace: string | null;
+  selectedSpace: Espacio | null;  // ← Cambiar de string | null a Espacio | null
   onClose: () => void;
 }
 
@@ -208,11 +89,7 @@ export default function SpaceBottomSheet({ selectedSpace, onClose }: SpaceBottom
 
   if (!selectedSpace) return null;
 
-  // Soporte para cualquier id: si no hay info, mostramos un fallback
-  const spaceInfo: SpaceInfo = REGION_INFO[selectedSpace] ?? {
-    nombre: selectedSpace,
-    desc: "Información no disponible para este espacio.",
-  };
+  const API_URL = 'http://192.168.0.168:3000';
 
   return (
     <Animated.View
@@ -230,8 +107,12 @@ export default function SpaceBottomSheet({ selectedSpace, onClose }: SpaceBottom
           <ScrollView showsVerticalScrollIndicator={false}>
             {/* Imagen placeholder */}
             <View style={styles.imageContainer}>
-              {spaceInfo.foto ? (
-                <Image source={spaceInfo.foto} style={styles.image} resizeMode="cover" />
+              {selectedSpace.imagen ? (
+                <Image 
+                  source={{ uri: `${API_URL}/uploads/${selectedSpace.imagen}` }}
+                  style={styles.image}
+                  resizeMode="cover"
+                />
               ) : (
                 <View style={styles.imagePlaceholder}>
                   <Text style={styles.placeholderText}>Imagen no disponible</Text>
@@ -240,20 +121,20 @@ export default function SpaceBottomSheet({ selectedSpace, onClose }: SpaceBottom
             </View>
 
             {/* Título */}
-            <Text style={styles.title}>{spaceInfo.nombre}</Text>
+            <Text style={styles.title}>{selectedSpace.nombre}</Text>
 
             {/* Descripción */}
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>Descripción:</Text>
-              <Text style={styles.description}>{spaceInfo.desc}</Text>
+              <Text style={styles.description}>{selectedSpace.descripcion}</Text>
             </View>
 
             {/* Categorías */}
-            {spaceInfo.categorias && (
+            {selectedSpace.categorias && (
               <View style={styles.section}>
                 <Text style={styles.sectionTitle}>Categorías:</Text>
                 <View style={styles.categoriesContainer}>
-                  {spaceInfo.categorias.map((categoria, index) => (
+                  {selectedSpace.categorias.map((categoria, index) => (
                     <View
                       key={index}
                       style={[
