@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useState } from "react";
+import React, { useMemo, useRef, useState, useEffect } from "react";
 import {
   Animated,
   GestureResponderEvent,
@@ -11,6 +11,7 @@ import {
 import Svg, { G, Path, Rect } from "react-native-svg";
 import Searchbar from "./Searchbar";
 import SpaceBottomSheet from "./SpaceBottomSheet";
+import { getEspacios } from "../services/api";
 
 type RegionId = string;
 
@@ -163,6 +164,17 @@ export default function InteractiveMap() {
   const handleSearchChange = (text: string) => {
     // opcional: lógica de búsqueda
   };
+
+  // Test: cargar espacios al montar
+  useEffect(() => {
+    getEspacios()
+      .then(espacios => {
+        console.log('✅ Espacios cargados:', espacios);
+      })
+      .catch(error => {
+        console.log('❌ Error:', error);
+      });
+  }, []);
 
   return (
     <View
