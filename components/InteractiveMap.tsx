@@ -61,14 +61,6 @@ const ZONES: Array<{ id: RegionId; x: number; y: number; w: number; h: number; r
   { id: "33", x: 452, y: 178, w: 84, h: 56, r: 6 },
   { id: "34", x: 452, y: 121, w: 84, h: 54, r: 6 },
   { id: "35", x: 428, y: 3, w: 108, h: 115, r: 10 },
-  
-
-  { id: "secretaria_relaciones_institucionales", x: 100, y: 1054, w: 23, h: 18, r: 6 },
-  { id: "secretaria_tecnologia", x: 126, y: 1054, w: 14, h: 18, r: 6 },
-  { id: "secretaria_cultura", x: 143, y: 1054, w: 13, h: 64, r: 6 },
-  { id: "secretaria_deportes", x: 159, y: 1054, w: 24, h: 18, r: 6 },
-  { id: "secretaria_genero_y_diversidad", x: 186, y: 1054, w: 23, h: 18, r: 6 },
-
 ];
 
 function clamp(n: number, min: number, max: number) {
