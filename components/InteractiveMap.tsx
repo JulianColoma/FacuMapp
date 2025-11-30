@@ -34,14 +34,15 @@ const ZONES: Array<{ id: RegionId; x: number; y: number; w: number; h: number; r
   { id: "6", x: 100, y: 1075, w: 40, h: 43, r: 8 },
   { id: "7", x: 159, y: 1099, w: 59, h: 24, r: 6 },
   { id: "8", x: 159, y: 1075, w: 59, h: 21, r: 6 },
-
   { id: "9", x: 143, y: 1019, w: 66, h: 32, r: 8 },
   { id: "10", x: 143, y: 976, w: 74, h: 40, r: 8 },
   { id: "11", x: 143, y: 928, w: 74, h: 45, r: 8 },
   { id: "12", x: 143, y: 881, w: 74, h: 44, r: 8 },
   { id: "13", x: 143, y: 802, w: 75, h: 44, r: 6 },
+
   { id: "15", x: 267, y: 796, w: 45, h: 50, r: 6 },
   { id: "16", x: 267, y: 761, w: 45, h: 32, r: 6 },
+  { id: "17", x: 49, y: 751, w: 48, h: 72, r: 8 },
   { id: "18", x: 103, y: 624, w: 69, h: 46, r: 6 },
   { id: "19", x: 199, y: 630, w: 84, h: 95, r: 8 },
   { id: "20", x: 286, y: 702, w: 43, h: 23, r: 6 },
@@ -50,23 +51,23 @@ const ZONES: Array<{ id: RegionId; x: number; y: number; w: number; h: number; r
   { id: "23", x: 309, y: 556, w: 93, h: 120, r: 8 },
   { id: "24", x: 452, y: 680, w: 55, h: 45, r: 6 },
   { id: "25", x: 452, y: 584, w: 55, h: 93, r: 6 },
-  // { id: "26", x: 536, y: 584, w: 55, h: 93, r: 6 },
+  { id: "26", x: 452, y: 536, w: 55, h: 45, r: 6 },
   { id: "27", x: 309, y: 313, w: 93, h: 240, r: 10 },
   { id: "28", x: 452, y: 471, w: 84, h: 62, r: 6 },
+  { id: "29", x: 452, y: 413, w: 84, h: 55, r: 6 },
+  { id: "30", x: 452, y: 354, w: 84, h: 56, r: 6 },
+  { id: "31", x: 452, y: 295, w: 84, h: 56, r: 6 },
+  { id: "32", x: 452, y: 237, w: 84, h: 55, r: 6 },
+  { id: "33", x: 452, y: 178, w: 84, h: 56, r: 6 },
+  { id: "34", x: 452, y: 121, w: 84, h: 54, r: 6 },
+  { id: "35", x: 428, y: 3, w: 108, h: 115, r: 10 },
+  
 
-  { id: "secretaria_asuntos_universitarios", x: 49, y: 751, w: 48, h: 72, r: 8 },
   { id: "secretaria_relaciones_institucionales", x: 100, y: 1054, w: 23, h: 18, r: 6 },
   { id: "secretaria_tecnologia", x: 126, y: 1054, w: 14, h: 18, r: 6 },
   { id: "secretaria_cultura", x: 143, y: 1054, w: 13, h: 64, r: 6 },
   { id: "secretaria_deportes", x: 159, y: 1054, w: 24, h: 18, r: 6 },
   { id: "secretaria_genero_y_diversidad", x: 186, y: 1054, w: 23, h: 18, r: 6 },
-  { id: "rectangle_153", x: 452, y: 413, w: 84, h: 55, r: 6 },
-  { id: "rectangle_154", x: 452, y: 354, w: 84, h: 56, r: 6 },
-  { id: "rectangle_155", x: 452, y: 295, w: 84, h: 56, r: 6 },
-  { id: "rectangle_156", x: 452, y: 237, w: 84, h: 55, r: 6 },
-  { id: "rectangle_157", x: 452, y: 178, w: 84, h: 56, r: 6 },
-  { id: "rectangle_158", x: 452, y: 121, w: 84, h: 54, r: 6 },
-  { id: "Anfiteatro-Física", x: 428, y: 3, w: 108, h: 115, r: 10 },
 
 ];
 
@@ -226,48 +227,31 @@ export default function InteractiveMap() {
             <Rect id="baño_personal" x={159} y={1099} width={59} height={24} fill="#e2fee3ff" stroke="#38dc26ff" strokeWidth={2} />
             <Rect id="lactario" x={159} y={1075} width={59} height={21} fill="#e2fee3ff" stroke="#38dc26ff" strokeWidth={2} />
             <Rect id="recursos_humanos" x={143} y={1019} width={66} height={32} fill="#e2fee3ff" stroke="#38dc26ff" strokeWidth={2} />
-
-            <Rect id="cocina" x={103} y={624} width={69} height={46} fill="#FEE2E2" stroke="#DC2626" strokeWidth={2} />
-            <Rect id="secretaria_asuntos_universitarios" x={49} y={751} width={48} height={72} fill="#FEE2E2" stroke="#DC2626" strokeWidth={2} />
-            <Rect id="alumnos" x={199} y={630} width={84} height={95} fill="#FEE2E2" stroke="#DC2626" strokeWidth={2} />
-            <Rect id="secretaria_relaciones_institucionales" x={100} y={1054} width={23} height={18} fill="#FEE2E2" stroke="#DC2626" strokeWidth={2} />
-            <Rect id="secretaria_tecnologia" x={126} y={1054} width={14} height={18} fill="#FEE2E2" stroke="#DC2626" strokeWidth={2} />
-            <Rect id="secretaria_cultura" x={143} y={1054} width={13} height={64} fill="#FEE2E2" stroke="#DC2626" strokeWidth={2} />
-            <Rect id="secretaria_deportes" x={159} y={1054} width={24} height={18} fill="#FEE2E2" stroke="#DC2626" strokeWidth={2} />
-            <Rect id="secretaria_gestion_estudiantil" x={143} y={976} width={74} height={40} fill="#FEE2E2" stroke="#DC2626" strokeWidth={2} />
-            <Rect id="secretaria_vida_estudiantil" x={143} y={928} width={74} height={45} fill="#FEE2E2" stroke="#DC2626" strokeWidth={2} />
-            <Rect id="secretaria_servicios_al_estudiante" x={143} y={881} width={74} height={44} fill="#FEE2E2" stroke="#DC2626" strokeWidth={2} />
-            <Rect id="secretaria_genero_y_diversidad" x={186} y={1054} width={23} height={18} fill="#FEE2E2" stroke="#DC2626" strokeWidth={2} />
-
-            <Rect id="rectangle_149" x={452} y={680} width={55} height={45} fill="#FEE2E2" stroke="#DC2626" strokeWidth={2} />
-            <Rect id="rectangle_150" x={452} y={584} width={55} height={93} fill="#FEE2E2" stroke="#DC2626" strokeWidth={2} />
-            <Rect id="rectangle_151" x={309} y={274} width={46} height={36} fill="#FEE2E2" stroke="#DC2626" strokeWidth={2} />
-            <Rect id="rectangle_152" x={452} y={471} width={84} height={62} fill="#FEE2E2" stroke="#DC2626" strokeWidth={2} />
-            <Rect id="rectangle_153" x={452} y={413} width={84} height={55} fill="#FEE2E2" stroke="#DC2626" strokeWidth={2} />
-            <Rect id="rectangle_154" x={452} y={354} width={84} height={56} fill="#FEE2E2" stroke="#DC2626" strokeWidth={2} />
-            <Rect id="rectangle_155" x={452} y={295} width={84} height={56} fill="#FEE2E2" stroke="#DC2626" strokeWidth={2} />
-            <Rect id="rectangle_156" x={452} y={237} width={84} height={55} fill="#FEE2E2" stroke="#DC2626" strokeWidth={2} />
-            <Rect id="rectangle_157" x={452} y={178} width={84} height={56} fill="#FEE2E2" stroke="#DC2626" strokeWidth={2} />
-            <Rect id="rectangle_158" x={452} y={121} width={84} height={54} fill="#FEE2E2" stroke="#DC2626" strokeWidth={2} />
-            <Rect id="Anfiteatro-Física" x={428} y={3} width={108} height={115} fill="#FEE2E2" stroke="#DC2626" strokeWidth={2} />
-
-            <Rect id="rectangle_53" x={267} y={761} width={45} height={32} fill="#FEE2E2" stroke="#DC2626" strokeWidth={2} />
-            <Rect id="rectangle_56" x={267} y={796} width={45} height={50} fill="#FEE2E2" stroke="#DC2626" strokeWidth={2} />
-            <Rect id="rectangle_58" x={315} y={758} width={21} height={91} fill="#FEE2E2" stroke="#DC2626" strokeWidth={2} />
-
-            <Rect id="buffet" x={309} y={556} width={93} height={120} fill="#FEE2E2" stroke="#DC2626" strokeWidth={2} />
-            <Rect id="sum" x={309} y={313} width={93} height={240} fill="#FEE2E2" stroke="#DC2626" strokeWidth={2} />
-            <Rect id="baños_mixtos" x={332} y={702} width={30} height={23} fill="#FEE2E2" stroke="#DC2626" strokeWidth={2} />
-            <Rect id="baños_mixtos2" x={365} y={702} width={30} height={23} fill="#FEE2E2" stroke="#DC2626" strokeWidth={2} />
-            <Rect id="rectangle_39" x={286} y={702} width={43} height={23} fill="#FEE2E2" stroke="#DC2626" strokeWidth={2} />
-            <Rect id="rectangle_35" x={398} y={679} width={27} height={46} fill="#FEE2E2" stroke="#DC2626" strokeWidth={2} />
-
-            {/* Pasillos/estructura: se mantienen */}
-            <Rect id="rectangle_37" x={286} y={679} width={112} height={20} fill="#F3F4F6" stroke="#6B7280" strokeWidth={1} />
-            <Rect id="rectangle_40" x={286} y={493} width={20} height={186} fill="#F3F4F6" stroke="#6B7280" strokeWidth={1} />
-            <Rect id="rectangle_41" x={405} y={493} width={20} height={186} fill="#F3F4F6" stroke="#6B7280" strokeWidth={1} />
-
-            <Rect id="rectangle_8" x={143} y={802} width={75} height={44} fill="#FEE2E2" stroke="#DC2626" strokeWidth={2} />
+            <Rect id="departamento_personal" x={143} y={976} width={74} height={40} fill="#e2fee3ff" stroke="#38dc26ff" strokeWidth={2} />
+            <Rect id="direccion_administracion/compras/patimonio" x={143} y={928} width={74} height={45} fill="#e2fee3ff" stroke="#38dc26ff" strokeWidth={2} />
+            <Rect id="direccion_administracion/contable/tesoreria" x={143} y={881} width={74} height={44} fill="#e2fee3ff" stroke="#38dc26ff" strokeWidth={2} />
+            <Rect id="despacho_general/mesa_entrada/informes" x={143} y={802} width={75} height={44} fill="#e2fee3ff" stroke="#38dc26ff" strokeWidth={2} />
+            <Rect id="no_se_3" x={267} y={796} width={45} height={50} fill="#e2fee3ff" stroke="#38dc26ff" strokeWidth={2} />
+            <Rect id="equipo_interdisciplinario" x={267} y={761} width={45} height={32} fill="#e2fee3ff" stroke="#38dc26ff" strokeWidth={2} />
+            <Rect id="dasuten" x={49} y={751} width={48} height={72} fill="#e2fee3ff" stroke="#38dc26ff" strokeWidth={2} />
+            <Rect id="pecera" x={103} y={624} width={69} height={46} fill="#e2fee3ff" stroke="#38dc26ff" strokeWidth={2} />
+            <Rect id="alumnos" x={199} y={630} width={84} height={95} fill="#e2fee3ff" stroke="#38dc26ff" strokeWidth={2} />
+            <Rect id="adut" x={286} y={702} width={43} height={23} fill="#e2fee3ff" stroke="#38dc26ff" strokeWidth={2} />
+            <Rect id="direccion_servicios_generales" x={332} y={702} width={30} height={23} fill="#e2fee3ff" stroke="#38dc26ff" strokeWidth={2} />
+            <Rect id="baños_mixtos" x={365} y={702} width={30} height={23} fill="#e2fee3ff" stroke="#38dc26ff" strokeWidth={2} />
+            <Rect id="buffet" x={309} y={556} width={93} height={120} fill="#e2fee3ff" stroke="#38dc26ff" strokeWidth={2} />
+            <Rect id="area_tecnica_tic/redes/servidores" x={452} y={680} width={55} height={45} fill="#e2fee3ff" stroke="#38dc26ff" strokeWidth={2} />
+            <Rect id="area_tecnica_tic/desarrollo/ciberseguridad" x={452} y={584} width={55} height={93} fill="#e2fee3ff" stroke="#38dc26ff" strokeWidth={2} />
+            <Rect id="iec" x={452} y={536} width={55} height={45} fill="#e2fee3ff" stroke="#38dc26ff" strokeWidth={2} />
+            <Rect id="sum" x={309} y={313} width={93} height={240} fill="#e2fee3ff" stroke="#38dc26ff" strokeWidth={2} />
+            <Rect id="direccion_departamento_ciencias_basicas" x={452} y={471} width={84} height={62} fill="#e2fee3ff" stroke="#38dc26ff" strokeWidth={2} />
+            <Rect id="aula_61" x={452} y={413} width={84} height={55} fill="#e2fee3ff" stroke="#38dc26ff" strokeWidth={2} />
+            <Rect id="laboratorio_iec" x={452} y={354} width={84} height={56} fill="#e2fee3ff" stroke="#38dc26ff" strokeWidth={2} />
+            <Rect id="laboratorio_fisica" x={452} y={295} width={84} height={56} fill="#e2fee3ff" stroke="#38dc26ff" strokeWidth={2} />
+            <Rect id="aula_62" x={452} y={237} width={84} height={55} fill="#e2fee3ff" stroke="#38dc26ff" strokeWidth={2} />
+            <Rect id="aula_63" x={452} y={178} width={84} height={56} fill="#e2fee3ff" stroke="#38dc26ff" strokeWidth={2} />
+            <Rect id="laboratorio_fisica_3" x={452} y={121} width={84} height={54} fill="#e2fee3ff" stroke="#38dc26ff" strokeWidth={2} />
+            <Rect id="Anfiteatro-Física" x={428} y={3} width={108} height={115} fill="#e2fee3ff" stroke="#38dc26ff" strokeWidth={2} />
 
             <Path
               id="paredes"
