@@ -79,6 +79,8 @@ export default function InteractiveMap() {
   const [selected, setSelected] = useState<RegionId | null>(null);
   const [espacios, setEspacios] = useState<Espacio[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [showSuggestions, setShowSuggestions] = useState(false);
 
   const translateX = useRef(new Animated.Value(0)).current;
   const translateY = useRef(new Animated.Value(0)).current;
@@ -159,8 +161,31 @@ export default function InteractiveMap() {
   const openSpace = (id: RegionId) => setSelected(id);
   const closeSheet = () => setSelected(null);
 
+  const normalize = (s: string) =>
+    s
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/\p{Diacritic}/gu, "");
+
   const handleSearchChange = (text: string) => {
-    // opcional: lógica de búsqueda
+    setSearchQuery(text);
+    setShowSuggestions(text.trim().length > 0);
+  };
+
+  const suggestions = useMemo(() => {
+    const q = normalize(searchQuery.trim());
+    if (!q) return [] as Espacio[];
+    const byMatch = espacios.filter((e) => normalize(e.nombre || "").includes(q));
+    // Priorizar comienza con "q"
+    const starts = byMatch.filter((e) => normalize(e.nombre || "").startsWith(q));
+    const rest = byMatch.filter((e) => !normalize(e.nombre || "").startsWith(q));
+    return [...starts, ...rest].slice(0, 8);
+  }, [espacios, searchQuery]);
+
+  const handleSelectSuggestion = (id: RegionId) => {
+    setSelected(id);
+    setShowSuggestions(false);
+    setSearchQuery("");
   };
 
   // Cargar espacios del backend
@@ -204,7 +229,7 @@ export default function InteractiveMap() {
   return (
     <View
       style={styles.container}
-      {...(selected ? {} : panResponder.panHandlers)}
+      {...(selected || showSuggestions ? {} : panResponder.panHandlers)}
     >
       {/* Indicador de carga */}
       {loading && (
@@ -609,6 +634,26 @@ export default function InteractiveMap() {
       {/* Searchbar flotante como en el componente old */}
       <View style={styles.searchbarContainer} pointerEvents="box-none">
         <Searchbar onSearchChange={handleSearchChange} />
+
+        {showSuggestions && (
+          <View style={styles.suggestionsContainer} pointerEvents="auto">
+            {suggestions.length === 0 ? (
+              <View style={styles.suggestionItem}>
+                <Text style={styles.suggestionText}>Sin resultados</Text>
+              </View>
+            ) : (
+              suggestions.map((esp) => (
+                <Pressable
+                  key={esp.id}
+                  onPress={() => handleSelectSuggestion(esp.id.toString())}
+                  style={styles.suggestionItem}
+                >
+                  <Text style={styles.suggestionText}>{esp.nombre}</Text>
+                </Pressable>
+              ))
+            )}
+          </View>
+        )}
       </View>
 
       {/* Bottom Sheet con datos del backend */}
@@ -643,6 +688,32 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     zIndex: 10,
+  },
+  suggestionsContainer: {
+    position: "absolute",
+    top: 56,
+    left: 16,
+    right: 16,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 12,
+    overflow: "hidden",
+    elevation: 4,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.12,
+    shadowRadius: 6,
+    maxHeight: 260,
+  },
+  suggestionItem: {
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: "#E5E7EB",
+    backgroundColor: "#FFFFFF",
+  },
+  suggestionText: {
+    fontSize: 15,
+    color: "#1F2937",
   },
   loadingContainer: {
     position: "absolute",
