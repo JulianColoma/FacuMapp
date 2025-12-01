@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { SafeAreaView, ScrollView, StyleSheet, Text, View, ActivityIndicator } from "react-native";
+import { useRouter } from "expo-router";
 import EventCard from "../components/EventCard";
 import { getEventos, Evento } from "../services/api";
 
 export default function InfoScreen() {
+  const router = useRouter();
   const [eventos, setEventos] = useState<Evento[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -31,7 +33,12 @@ export default function InfoScreen() {
   };
 
   const handleEventPress = (evento: Evento) => {
-    console.log("Evento seleccionado:", evento);
+    router.push({
+      pathname: "/event-detail",
+      params: {
+        evento: JSON.stringify(evento),
+      },
+    });
   };
 
   if (loading) {

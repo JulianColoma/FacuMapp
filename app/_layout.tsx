@@ -31,6 +31,13 @@ export default function RootLayout() {
       >
         <Tabs.Screen name="index" options={{ title: "Mapa" }} />
         <Tabs.Screen name="events" options={{ title: "Eventos" }} />
+        <Tabs.Screen 
+          name="event-detail" 
+          options={{ 
+            href: null,
+            headerShown: false,
+          }} 
+        />
       </Tabs>
     </>
   );
