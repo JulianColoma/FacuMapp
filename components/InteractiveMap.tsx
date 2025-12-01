@@ -8,6 +8,7 @@ import {
   StyleSheet,
   View,
   Text,
+  Keyboard,
 } from "react-native";
 import Svg, { G, Path, Rect } from "react-native-svg";
 import Searchbar from "./Searchbar";
@@ -186,6 +187,7 @@ export default function InteractiveMap() {
     setSelected(id);
     setShowSuggestions(false);
     setSearchQuery("");
+    Keyboard.dismiss();
   };
 
   // Cargar espacios del backend
