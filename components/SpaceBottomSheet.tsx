@@ -26,8 +26,10 @@ interface SpaceInfo {
 }
 
 interface SpaceBottomSheetProps {
-  selectedSpace: Espacio | null;  // ← Cambiar de string | null a Espacio | null
+  selectedSpace: Espacio | null;  // ← Espacio completo
   onClose: () => void;
+  onWillClose?: () => void; // se dispara apenas comienza el cierre
+  selectionVersion?: number; // cambia en cada selección para forzar apertura
 }
 
 const CATEGORY_COLORS: Record<string, string> = {
@@ -36,24 +38,25 @@ const CATEGORY_COLORS: Record<string, string> = {
   "Afuera": "#9C27B0",
 };
 
-export default function SpaceBottomSheet({ selectedSpace, onClose }: SpaceBottomSheetProps) {
+export default function SpaceBottomSheet({ selectedSpace, onClose, onWillClose, selectionVersion }: SpaceBottomSheetProps) {
   const translateY = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    if (selectedSpace) {
-      // Animar hacia arriba al 90% cuando se selecciona un espacio
-      Animated.spring(translateY, {
-        toValue: MAX_TRANSLATE_Y,
-        useNativeDriver: true,
-      }).start();
-    } else {
-      // Animar hacia abajo para cerrar
-      Animated.spring(translateY, {
-        toValue: 0,
-        useNativeDriver: true,
-      }).start();
-    }
-  }, [selectedSpace, translateY]);
+    // Interrumpir cualquier animación anterior para evitar "tironeos" y delays
+    translateY.stopAnimation(() => {
+      if (selectedSpace) {
+        Animated.spring(translateY, {
+          toValue: MAX_TRANSLATE_Y,
+          useNativeDriver: true,
+        }).start();
+      } else {
+        Animated.spring(translateY, {
+          toValue: 0,
+          useNativeDriver: true,
+        }).start();
+      }
+    });
+  }, [selectedSpace, translateY, selectionVersion]);
 
   const panResponder = useRef(
     PanResponder.create({
@@ -72,10 +75,14 @@ export default function SpaceBottomSheet({ selectedSpace, onClose }: SpaceBottom
         // Decidir si cerrar o mantener abierto basado en la velocidad y posición
         if (vy > 0.5 || dy > 100) {
           // Cerrar
+          // Avisar inmediatamente para que el highlight se quite sin delay
+          onWillClose?.();
           Animated.spring(translateY, {
             toValue: 0,
             useNativeDriver: true,
-          }).start(() => onClose());
+          }).start(({ finished }) => {
+            if (finished) onClose();
+          });
         } else {
           // Volver al 90%
           Animated.spring(translateY, {
@@ -86,8 +93,6 @@ export default function SpaceBottomSheet({ selectedSpace, onClose }: SpaceBottom
       },
     })
   ).current;
-
-  if (!selectedSpace) return null;
 
   const API_URL = 'http://192.168.0.168:3000';
 
@@ -103,52 +108,54 @@ export default function SpaceBottomSheet({ selectedSpace, onClose }: SpaceBottom
       <View style={styles.content} {...panResponder.panHandlers}>
           {/* Indicador de arrastre */}
           <View style={styles.dragIndicator} />
-          
-          <ScrollView showsVerticalScrollIndicator={false}>
-            {/* Imagen placeholder */}
-            <View style={styles.imageContainer}>
-              {selectedSpace.imagen ? (
-                <Image 
-                  source={{ uri: `${API_URL}/uploads/${selectedSpace.imagen}` }}
-                  style={styles.image}
-                  resizeMode="cover"
-                />
-              ) : (
-                <View style={styles.imagePlaceholder}>
-                  <Text style={styles.placeholderText}>Imagen no disponible</Text>
+
+          {selectedSpace && (
+            <ScrollView showsVerticalScrollIndicator={false}>
+              {/* Imagen placeholder */}
+              <View style={styles.imageContainer}>
+                {selectedSpace.imagen ? (
+                  <Image
+                    source={{ uri: `${API_URL}/uploads/${selectedSpace.imagen}` }}
+                    style={styles.image}
+                    resizeMode="cover"
+                  />
+                ) : (
+                  <View style={styles.imagePlaceholder}>
+                    <Text style={styles.placeholderText}>Imagen no disponible</Text>
+                  </View>
+                )}
+              </View>
+
+              {/* Título */}
+              <Text style={styles.title}>{selectedSpace.nombre}</Text>
+
+              {/* Descripción */}
+              <View style={styles.section}>
+                <Text style={styles.sectionTitle}>Descripción:</Text>
+                <Text style={styles.description}>{selectedSpace.descripcion}</Text>
+              </View>
+
+              {/* Categorías */}
+              {selectedSpace.categorias && (
+                <View style={styles.section}>
+                  <Text style={styles.sectionTitle}>Categorías:</Text>
+                  <View style={styles.categoriesContainer}>
+                    {selectedSpace.categorias.map((categoria, index) => (
+                      <View
+                        key={index}
+                        style={[
+                          styles.categoryTag,
+                          { backgroundColor: CATEGORY_COLORS[categoria] || "#757575" },
+                        ]}
+                      >
+                        <Text style={styles.categoryText}>{categoria}</Text>
+                      </View>
+                    ))}
+                  </View>
                 </View>
               )}
-            </View>
-
-            {/* Título */}
-            <Text style={styles.title}>{selectedSpace.nombre}</Text>
-
-            {/* Descripción */}
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Descripción:</Text>
-              <Text style={styles.description}>{selectedSpace.descripcion}</Text>
-            </View>
-
-            {/* Categorías */}
-            {selectedSpace.categorias && (
-              <View style={styles.section}>
-                <Text style={styles.sectionTitle}>Categorías:</Text>
-                <View style={styles.categoriesContainer}>
-                  {selectedSpace.categorias.map((categoria, index) => (
-                    <View
-                      key={index}
-                      style={[
-                        styles.categoryTag,
-                        { backgroundColor: CATEGORY_COLORS[categoria] || "#757575" }
-                      ]}
-                    >
-                      <Text style={styles.categoryText}>{categoria}</Text>
-                    </View>
-                  ))}
-                </View>
-              </View>
-            )}
-          </ScrollView>
+            </ScrollView>
+          )}
       </View>
     </Animated.View>
   );

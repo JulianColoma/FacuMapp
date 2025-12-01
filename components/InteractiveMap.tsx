@@ -78,10 +78,13 @@ function clamp(n: number, min: number, max: number) {
 
 export default function InteractiveMap() {
   const [selected, setSelected] = useState<RegionId | null>(null);
+  const [highlighted, setHighlighted] = useState<RegionId | null>(null);
   const [espacios, setEspacios] = useState<Espacio[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [sheetBlocking, setSheetBlocking] = useState(false);
+  const [selectionVersion, setSelectionVersion] = useState(0);
 
   const translateX = useRef(new Animated.Value(0)).current;
   const translateY = useRef(new Animated.Value(0)).current;
@@ -159,8 +162,20 @@ export default function InteractiveMap() {
     []
   );
 
-  const openSpace = (id: RegionId) => setSelected(id);
-  const closeSheet = () => setSelected(null);
+  const openSpace = (id: RegionId) => {
+    setSelected(id);
+    setHighlighted(id);
+    setSheetBlocking(true);
+    setSelectionVersion((v) => v + 1);
+  };
+  const closeSheet = () => {
+    setSelected(null);
+    setSheetBlocking(false);
+  };
+  const handleSheetWillClose = () => {
+    setHighlighted(null);
+    setSheetBlocking(false);
+  };
 
   const normalize = (s: string) =>
     s
@@ -185,9 +200,12 @@ export default function InteractiveMap() {
 
   const handleSelectSuggestion = (id: RegionId) => {
     setSelected(id);
+    setHighlighted(id);
+    setSheetBlocking(true);
     setShowSuggestions(false);
     setSearchQuery("");
     Keyboard.dismiss();
+    setSelectionVersion((v) => v + 1);
   };
 
   // Cargar espacios del backend
@@ -231,7 +249,7 @@ export default function InteractiveMap() {
   return (
     <View
       style={styles.container}
-      {...(selected || showSuggestions ? {} : panResponder.panHandlers)}
+      {...(sheetBlocking || showSuggestions ? {} : panResponder.panHandlers)}
     >
       {/* Indicador de carga */}
       {loading && (
@@ -242,7 +260,7 @@ export default function InteractiveMap() {
 
       <Animated.View
         collapsable={false}
-        pointerEvents={selected ? "none" : "auto"}
+        pointerEvents={sheetBlocking ? "none" : "auto"}
         style={{
           width: MAP_W,
           height: MAP_H,
@@ -611,7 +629,7 @@ export default function InteractiveMap() {
         {/* Overlays Pressable (fiables con transform) */}
         <View
           style={styles.overlay}
-          pointerEvents={selected ? "none" : "auto"} // también bloquea taps en zonas
+          pointerEvents={sheetBlocking ? "none" : "auto"} // también bloquea taps en zonas
         >
           {ZONES.map((z) => (
             <Pressable
@@ -624,6 +642,10 @@ export default function InteractiveMap() {
                   width: z.w,
                   height: z.h,
                   borderRadius: z.r ?? 6,
+                  backgroundColor:
+                    highlighted === z.id ? "rgba(56, 220, 38, 0.3)" : "transparent",
+                  borderWidth: highlighted === z.id ? 1 : 0,
+                  borderColor: highlighted === z.id ? COLORS.verde : "transparent",
                 },
               ]}
               onPress={() => openSpace(z.id)}
@@ -661,7 +683,9 @@ export default function InteractiveMap() {
       {/* Bottom Sheet con datos del backend */}
       <SpaceBottomSheet
         selectedSpace={espacioSeleccionado}
-        onClose={() => setSelected(null)}
+        onClose={closeSheet}
+        onWillClose={handleSheetWillClose}
+        selectionVersion={selectionVersion}
       />
     </View>
   );
