@@ -13,7 +13,9 @@ import {
 import { Espacio } from "../services/api";
 
 const { height: SCREEN_HEIGHT } = Dimensions.get("window");
-const MAX_TRANSLATE_Y = -SCREEN_HEIGHT * 0.90; // 90% de la pantalla
+// Snap points: abierto medio y expandido al tope (90%)
+const MAX_TRANSLATE_Y = -SCREEN_HEIGHT * 0.90; // expandido (alto)
+const OPEN_TRANSLATE_Y = -SCREEN_HEIGHT * 0.60; // abierto inicial (un poco más alto)
 
 // Permitimos cualquier id de región como string para soportar todos los elementos del SVG
 type RegionId = string;
@@ -40,13 +42,14 @@ const CATEGORY_COLORS: Record<string, string> = {
 
 export default function SpaceBottomSheet({ selectedSpace, onClose, onWillClose, selectionVersion }: SpaceBottomSheetProps) {
   const translateY = useRef(new Animated.Value(0)).current;
+  const startYRef = useRef(0);
 
   useEffect(() => {
     // Interrumpir cualquier animación anterior para evitar "tironeos" y delays
     translateY.stopAnimation(() => {
       if (selectedSpace) {
         Animated.spring(translateY, {
-          toValue: MAX_TRANSLATE_Y,
+          toValue: OPEN_TRANSLATE_Y,
           useNativeDriver: true,
         }).start();
       } else {
@@ -63,19 +66,29 @@ export default function SpaceBottomSheet({ selectedSpace, onClose, onWillClose, 
       onStartShouldSetPanResponder: () => true,
       onMoveShouldSetPanResponder: () => true,
       
-      onPanResponderMove: (event, gestureState) => {
+      onPanResponderGrant: () => {
+        translateY.stopAnimation((val?: number) => {
+          startYRef.current = typeof val === 'number' ? val : 0;
+        });
+      },
+
+      onPanResponderMove: (_event, gestureState) => {
         const { dy } = gestureState;
-        // Limitar el movimiento: no puede subir más del 90%
-        const newTranslateY = Math.min(0, Math.max(MAX_TRANSLATE_Y + dy, MAX_TRANSLATE_Y));
+        const target = startYRef.current + dy;
+        // Limitar entre expandido (MAX_TRANSLATE_Y) y abierto medio (OPEN_TRANSLATE_Y)
+        const newTranslateY = Math.max(MAX_TRANSLATE_Y, Math.min(OPEN_TRANSLATE_Y, target));
         translateY.setValue(newTranslateY);
       },
       
-      onPanResponderRelease: (event, gestureState) => {
+      onPanResponderRelease: (_event, gestureState) => {
         const { dy, vy } = gestureState;
-        // Decidir si cerrar o mantener abierto basado en la velocidad y posición
-        if (vy > 0.5 || dy > 100) {
-          // Cerrar
-          // Avisar inmediatamente para que el highlight se quite sin delay
+        const currentY = startYRef.current + dy;
+
+        // Umbrales de decisión (solo dos estados de abierto; cerrar solo con gesto fuerte hacia abajo)
+        const towardClose = vy > 0.9; // cerrar solo con flick claro hacia abajo
+        const towardExpand = vy < -0.5 || currentY < (OPEN_TRANSLATE_Y + MAX_TRANSLATE_Y) / 2; // más cerca de expandido
+
+        if (towardClose) {
           onWillClose?.();
           Animated.spring(translateY, {
             toValue: 0,
@@ -83,13 +96,22 @@ export default function SpaceBottomSheet({ selectedSpace, onClose, onWillClose, 
           }).start(({ finished }) => {
             if (finished) onClose();
           });
-        } else {
-          // Volver al 90%
+          return;
+        }
+
+        if (towardExpand) {
           Animated.spring(translateY, {
             toValue: MAX_TRANSLATE_Y,
             useNativeDriver: true,
           }).start();
+          return;
         }
+
+        // Snap al punto abierto medio por defecto
+        Animated.spring(translateY, {
+          toValue: OPEN_TRANSLATE_Y,
+          useNativeDriver: true,
+        }).start();
       },
     })
   ).current;
