@@ -1,41 +1,51 @@
-import React from "react";
-import { SafeAreaView, ScrollView, StyleSheet, Text, View } from "react-native";
+import React, { useEffect, useState } from "react";
+import { SafeAreaView, ScrollView, StyleSheet, Text, View, ActivityIndicator } from "react-native";
 import EventCard from "../components/EventCard";
+import { getEventos, Evento } from "../services/api";
 
 export default function InfoScreen() {
-  const eventos = [
-    {
-      nombre: "Semana de la Ingeniería",
-      fechaInicio: "15/03/2025",
-      fechaFin: "22/03/2025",
-      color: "#3B82F6",
-    },
-    {
-      nombre: "Jornadas de Electrónica",
-      fechaInicio: "10/04/2025",
-      fechaFin: "12/04/2025",
-      color: "#10B981",
-    },
-    {
-      nombre: "Hackathon UTN",
-      fechaInicio: "05/05/2025",
-      fechaFin: "07/05/2025",
-      color: "#F59E0B",
-    },
-    {
-      nombre: "Expo Ingeniería Industrial",
-      fechaInicio: "20/05/2025",
-      fechaFin: "22/05/2025",
-      color: "#8B5CF6",
-    },
-  ];
+  const [eventos, setEventos] = useState<Evento[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const handleEventPress = (evento: typeof eventos[0]) => {
-    // Mostrar toda la información del evento seleccionado en la consola
-    console.log("Evento seleccionado:", evento);
-    // Si prefieres un JSON legible:
-    // console.log("Evento seleccionado (JSON):\n", JSON.stringify(evento, null, 2));
+  useEffect(() => {
+    loadEventos();
+  }, []);
+
+  const loadEventos = async () => {
+    try {
+      setLoading(true);
+      const data = await getEventos();
+      setEventos(data);
+    } catch (error) {
+      console.error("Error al cargar eventos:", error);
+    } finally {
+      setLoading(false);
+    }
   };
+
+  const colors = ["#3B82F6", "#10B981", "#F59E0B", "#8B5CF6", "#EC4899", "#06B6D4"];
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+  };
+
+  const handleEventPress = (evento: Evento) => {
+    console.log("Evento seleccionado:", evento);
+  };
+
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.header}>
+          <Text style={styles.title}>Eventos</Text>
+        </View>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#3B82F6" />
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -45,11 +55,11 @@ export default function InfoScreen() {
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {eventos.map((evento, index) => (
           <EventCard
-            key={index}
+            key={evento.id}
             nombre={evento.nombre}
-            fechaInicio={evento.fechaInicio}
-            fechaFin={evento.fechaFin}
-            color={evento.color}
+            fechaInicio={formatDate(evento.fecha_inicio)}
+            fechaFin={formatDate(evento.fecha_fin)}
+            color={colors[index % colors.length]}
             onPress={() => handleEventPress(evento)}
           />
         ))}
@@ -76,5 +86,10 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     padding: 16,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
   },
 });
