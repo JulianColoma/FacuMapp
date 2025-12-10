@@ -1,8 +1,8 @@
-import React, { useEffect, useState } from "react";
-import { SafeAreaView, ScrollView, StyleSheet, Text, View, ActivityIndicator } from "react-native";
 import { useRouter } from "expo-router";
+import React, { useEffect, useState } from "react";
+import { ActivityIndicator, SafeAreaView, ScrollView, StyleSheet, Text, View } from "react-native";
 import EventCard from "../components/EventCard";
-import { getEventos, Evento } from "../services/api";
+import { Evento, getEventos } from "../services/api";
 
 export default function InfoScreen() {
   const router = useRouter();
@@ -66,6 +66,7 @@ export default function InfoScreen() {
             nombre={evento.nombre}
             fechaInicio={formatDate(evento.fecha_inicio)}
             fechaFin={formatDate(evento.fecha_fin)}
+            espacio={evento.nombre_espacio}
             color={colors[index % colors.length]}
             onPress={() => handleEventPress(evento)}
           />
