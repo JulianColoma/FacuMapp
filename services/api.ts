@@ -1,4 +1,4 @@
-const API_URL = process.env.API_URL;
+const API_URL = 'http://192.168.0.168:3000';
 
 export interface Espacio {
   id: number;

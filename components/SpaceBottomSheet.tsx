@@ -7,7 +7,8 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  View
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { Espacio } from "../services/api";
 
@@ -15,8 +16,6 @@ const { height: SCREEN_HEIGHT } = Dimensions.get("window");
 // Snap points: abierto medio y expandido al tope (90%)
 const MAX_TRANSLATE_Y = -SCREEN_HEIGHT * 0.90; // expandido (alto)
 const OPEN_TRANSLATE_Y = -SCREEN_HEIGHT * 0.60; // abierto inicial (un poco más alto)
-
-const API_URL = process.env.API_URL;
 
 // Permitimos cualquier id de región como string para soportar todos los elementos del SVG
 type RegionId = string;
@@ -116,6 +115,8 @@ export default function SpaceBottomSheet({ selectedSpace, onClose, onWillClose, 
       },
     })
   ).current;
+
+  const API_URL = 'http://192.168.0.168:3000';
 
   return (
     <Animated.View
