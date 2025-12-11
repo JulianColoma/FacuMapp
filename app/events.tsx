@@ -1,8 +1,8 @@
-import React, { useEffect, useState } from "react";
-import { SafeAreaView, ScrollView, StyleSheet, Text, View, ActivityIndicator } from "react-native";
 import { useRouter } from "expo-router";
+import React, { useEffect, useState } from "react";
+import { ActivityIndicator, SafeAreaView, ScrollView, StyleSheet, Text, View } from "react-native";
 import EventCard from "../components/EventCard";
-import { getEventos, Evento } from "../services/api";
+import { Evento, getEventos } from "../services/api";
 
 export default function InfoScreen() {
   const router = useRouter();
@@ -56,9 +56,6 @@ export default function InfoScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Eventos</Text>
-      </View>
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {eventos.map((evento, index) => (
           <EventCard
