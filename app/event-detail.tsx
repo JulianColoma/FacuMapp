@@ -1,34 +1,49 @@
+import { Ionicons } from "@expo/vector-icons";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-  ActivityIndicator,
-  Pressable,
+    ActivityIndicator,
+    Pressable,
+    ScrollView,
+    StyleSheet,
+    Text,
+    View,
 } from "react-native";
-import { useLocalSearchParams, useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Ionicons } from "@expo/vector-icons";
-import { Evento } from "../services/api";
+import { Actividad, Evento, getActividadesByEvento } from "../services/api";
 
 export default function EventDetailScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
   const [evento, setEvento] = useState<Evento | null>(null);
+  const [actividades, setActividades] = useState<Actividad[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingActividades, setLoadingActividades] = useState(true);
 
   useEffect(() => {
     if (params.evento) {
       try {
         const eventoData = JSON.parse(params.evento as string);
         setEvento(eventoData);
+        loadActividades(eventoData.id);
       } catch (error) {
         console.error("Error al parsear evento:", error);
       }
     }
     setLoading(false);
   }, [params.evento]);
+
+  const loadActividades = async (eventoId: number) => {
+    try {
+      setLoadingActividades(true);
+      const data = await getActividadesByEvento(eventoId);
+      setActividades(data);
+    } catch (error) {
+      console.error("Error al cargar actividades:", error);
+    } finally {
+      setLoadingActividades(false);
+    }
+  };
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -37,6 +52,14 @@ export default function EventDetailScreen() {
       month: "long",
       year: "numeric",
     });
+  };
+
+  const formatSimpleDate = (dateString: string) => {
+    const parts = dateString.split('-');
+    if (parts.length === 3) {
+      return `${parts[2]}/${parts[1]}/${parts[0]}`;
+    }
+    return dateString;
   };
 
   if (loading) {
@@ -110,6 +133,51 @@ export default function EventDetailScreen() {
               {evento.descripcion || "Sin descripción disponible"}
             </Text>
           </View>
+
+          {evento.nombre_espacio && (
+            <View style={styles.locationSection}>
+              <Ionicons name="location" size={20} color="#3B82F6" />
+              <Text style={styles.locationText}>{evento.nombre_espacio}</Text>
+            </View>
+          )}
+        </View>
+
+        {/* Sección de Actividades */}
+        <View style={styles.actividadesSection}>
+          <Text style={styles.actividadesSectionTitle}>Actividades</Text>
+          
+          {loadingActividades ? (
+            <View style={styles.actividadesLoading}>
+              <ActivityIndicator size="small" color="#3B82F6" />
+            </View>
+          ) : actividades.length > 0 ? (
+            actividades.map((actividad) => (
+              <View key={actividad.id} style={styles.actividadCard}>
+                <Text style={styles.actividadNombre}>{actividad.nombre}</Text>
+                <Text style={styles.actividadDescripcion}>
+                  {actividad.descripcion}
+                </Text>
+                <View style={styles.actividadInfo}>
+                  <View style={styles.actividadInfoItem}>
+                    <Ionicons name="calendar-outline" size={16} color="#6B7280" />
+                    <Text style={styles.actividadInfoText}>
+                      {formatSimpleDate(actividad.fecha)}
+                    </Text>
+                  </View>
+                  <View style={styles.actividadInfoItem}>
+                    <Ionicons name="time-outline" size={16} color="#6B7280" />
+                    <Text style={styles.actividadInfoText}>
+                      {actividad.hora_inicio} - {actividad.hora_fin}
+                    </Text>
+                  </View>
+                </View>
+              </View>
+            ))
+          ) : (
+            <Text style={styles.noActividadesText}>
+              No hay actividades programadas para este evento
+            </Text>
+          )}
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -196,6 +264,79 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#4B5563",
     lineHeight: 24,
+  },
+  locationSection: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginTop: 16,
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: "#E5E7EB",
+  },
+  locationText: {
+    fontSize: 16,
+    color: "#3B82F6",
+    fontWeight: "500",
+  },
+  actividadesSection: {
+    marginTop: 16,
+  },
+  actividadesSectionTitle: {
+    fontSize: 22,
+    fontWeight: "700",
+    color: "#1F2937",
+    marginBottom: 16,
+  },
+  actividadesLoading: {
+    padding: 20,
+    alignItems: "center",
+  },
+  actividadCard: {
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+    borderLeftWidth: 3,
+    borderLeftColor: "#3B82F6",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  actividadNombre: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: "#1F2937",
+    marginBottom: 8,
+  },
+  actividadDescripcion: {
+    fontSize: 14,
+    color: "#4B5563",
+    marginBottom: 12,
+    lineHeight: 20,
+  },
+  actividadInfo: {
+    flexDirection: "row",
+    gap: 16,
+    flexWrap: "wrap",
+  },
+  actividadInfoItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  actividadInfoText: {
+    fontSize: 13,
+    color: "#6B7280",
+  },
+  noActividadesText: {
+    fontSize: 15,
+    color: "#9CA3AF",
+    textAlign: "center",
+    padding: 20,
+    fontStyle: "italic",
   },
   loadingContainer: {
     flex: 1,

@@ -5,6 +5,7 @@ interface EventCardProps {
   nombre: string;
   fechaInicio: string;
   fechaFin: string;
+  espacio?: string;
   color: string;
   onPress?: () => void;
 }
@@ -13,6 +14,7 @@ const EventCard: React.FC<EventCardProps> = ({
   nombre,
   fechaInicio,
   fechaFin,
+  espacio,
   color,
   onPress,
 }) => {
@@ -44,6 +46,11 @@ const EventCard: React.FC<EventCardProps> = ({
       <Text style={styles.date}>
         {fechaInicio} - {fechaFin}
       </Text>
+      {espacio && (
+        <Text style={styles.location}>
+          📍 {espacio}
+        </Text>
+      )}
     </Pressable>
   );
 };
@@ -69,6 +76,11 @@ const styles = StyleSheet.create({
   date: {
     fontSize: 14,
     color: "#4B5563",
+  },
+  location: {
+    fontSize: 13,
+    color: "#6B7280",
+    marginTop: 6,
   },
 });
 

@@ -63,6 +63,7 @@ export default function InfoScreen() {
             nombre={evento.nombre}
             fechaInicio={formatDate(evento.fecha_inicio)}
             fechaFin={formatDate(evento.fecha_fin)}
+            espacio={evento.nombre_espacio}
             color={colors[index % colors.length]}
             onPress={() => handleEventPress(evento)}
           />
