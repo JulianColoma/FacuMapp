@@ -9,8 +9,9 @@ import {
   View,
   Text,
   Keyboard,
+  Dimensions,
 } from "react-native";
-import Svg, { G, Path, Rect } from "react-native-svg";
+import Svg, { G, Path, Rect, Circle, Line, Text as SvgText } from "react-native-svg";
 import Searchbar from "./Searchbar";
 import SpaceBottomSheet from "./SpaceBottomSheet";
 import { getEspacios, Espacio } from "../services/api";
@@ -85,6 +86,7 @@ export default function InteractiveMap() {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [sheetBlocking, setSheetBlocking] = useState(false);
   const [selectionVersion, setSelectionVersion] = useState(0);
+  const [cameraPosition, setCameraPosition] = useState({ x: 0, y: 0, scale: 1 });
 
   const translateX = useRef(new Animated.Value(0)).current;
   const translateY = useRef(new Animated.Value(0)).current;
@@ -155,6 +157,12 @@ export default function InteractiveMap() {
           lastTy.current = lastTy.current + g.dy;
           scale.stopAnimation((s) => {
             lastScale.current = clamp(s, MIN_SCALE, MAX_SCALE);
+            // Actualizar posición de cámara cuando se completa la animación
+            setCameraPosition({
+              x: lastTx.current,
+              y: lastTy.current,
+              scale: lastScale.current,
+            });
           });
         },
         onPanResponderTerminationRequest: () => true,
@@ -167,6 +175,44 @@ export default function InteractiveMap() {
     setHighlighted(id);
     setSheetBlocking(true);
     setSelectionVersion((v) => v + 1);
+    
+    // Encontrar el espacio en ZONES
+    const zone = ZONES.find(z => z.id === id);
+    if (!zone) return;
+    
+    // Calcular el centro del espacio
+    const spaceCenterX = zone.x + zone.w / 2;
+    const spaceCenterY = zone.y + zone.h / 2;
+    
+    // Calcular la traslación para centrar el espacio en la pantalla
+    const screenWidth = Dimensions.get("window").width;
+    const screenHeight = Dimensions.get("window").height;
+    
+    const translateXValue = -(spaceCenterX - screenWidth / 2);
+    // Posicionar el espacio en el tercio superior de la pantalla
+    const translateYValue = -(spaceCenterY - screenHeight / 3);
+    
+    Animated.parallel([
+      Animated.timing(translateX, {
+        toValue: translateXValue,
+        duration: 500,
+        useNativeDriver: false,
+      }),
+      Animated.timing(translateY, {
+        toValue: translateYValue,
+        duration: 500,
+        useNativeDriver: false,
+      }),
+      Animated.timing(scale, {
+        toValue: 1,
+        duration: 500,
+        useNativeDriver: false,
+      }),
+    ]).start(() => {
+      lastTx.current = translateXValue;
+      lastTy.current = translateYValue;
+      lastScale.current = 1;
+    });
   };
   const closeSheet = () => {
     setSelected(null);
@@ -226,25 +272,41 @@ export default function InteractiveMap() {
     loadEspacios();
   }, []);
 
+  // Actualizar posición de cámara continuamente
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCameraPosition({
+        x: lastTx.current,
+        y: lastTy.current,
+        scale: lastScale.current,
+      });
+    }, 100); // Actualizar cada 100ms
+
+    return () => clearInterval(interval);
+  }, []);
+
   // Buscar espacio seleccionado with debug
   const espacioSeleccionado = useMemo(() => {
     if (!selected) return null;
     const espacio = espacios.find((e) => e.id.toString() === selected);
-    console.log("🔍 Buscando espacio con ID:", selected);
-    console.log("📦 Espacio encontrado:", espacio);
+    // console.log("🔍 Buscando espacio con ID:", selected);
+    // console.log("📦 Espacio encontrado:", espacio);
     return espacio || null;
   }, [selected, espacios]);
 
-  // Debug cuando se selecciona un espacio
-  useEffect(() => {
-    if (selected) {
-      console.log("✅ Espacio seleccionado:", selected);
-      console.log(
-        "📊 Espacios disponibles:",
-        espacios.map((e) => e.id)
-      );
-    }
-  }, [selected, espacios]);
+  // // Debug cuando se selecciona un espacio
+  // useEffect(() => {
+  //   if (selected) {
+  //     console.log("✅ Espacio seleccionado:", selected);
+  //     console.log(
+  //       "📊 Espacios disponibles:",
+  //       espacios.map((e) => e.id)
+  //     );
+  //   }
+  // }, [selected, espacios]);
+
+  const screenWidth = Math.round(Dimensions.get("window").width);
+  const screenHeight = Math.round(Dimensions.get("window").height);
 
   return (
     <View
@@ -258,6 +320,21 @@ export default function InteractiveMap() {
         </View>
       )}
 
+      {/* Indicador de posición de cámara */}
+      <Animated.View style={[
+        styles.cameraPositionContainer,
+        {
+          opacity: 0.9,
+        }
+      ]}>
+        <Text style={styles.cameraPositionText}>
+          X: {Math.round(-cameraPosition.x)} | Y: {Math.round(-cameraPosition.y)} | Zoom: {(cameraPosition.scale).toFixed(2)}x
+        </Text>
+        <Text style={styles.cameraPositionText}>
+          W: {screenWidth}px | H: {screenHeight}px
+        </Text>
+      </Animated.View>
+
       <Animated.View
         collapsable={false}
         pointerEvents={sheetBlocking ? "none" : "auto"}
@@ -269,6 +346,14 @@ export default function InteractiveMap() {
       >
         <Svg width={MAP_W} height={MAP_H} viewBox={`0 0 ${MAP_W} ${MAP_H}`}>
           <G id="Group 1">
+            {/* Marcador de origen (0,0) */}
+            <Circle cx={0} cy={0} r={5} fill="red" opacity={0.7} />
+            <Line x1={-10} y1={0} x2={10} y2={0} stroke="red" strokeWidth={2} opacity={0.7} />
+            <Line x1={0} y1={-10} x2={0} y2={10} stroke="red" strokeWidth={2} opacity={0.7} />
+            <SvgText x={12} y={-8} fontSize={10} fill="red" opacity={0.7}>
+              (0,0)
+            </SvgText>
+            
             {/* Espacios con colores de la paleta */}
             <Rect
               id="secretaria_asuntos_universitarios"
@@ -648,7 +733,10 @@ export default function InteractiveMap() {
                   borderColor: highlighted === z.id ? COLORS.verde : "transparent",
                 },
               ]}
-              onPress={() => openSpace(z.id)}
+              onPress={() => {
+                openSpace(z.id);
+                console.log('Zone details:', z.x, z.y);
+              }}
               hitSlop={8}
             />
           ))}
@@ -756,5 +844,21 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     fontSize: 14,
+  },
+  cameraPositionContainer: {
+    position: "absolute",
+    bottom: 20,
+    right: 20,
+    backgroundColor: "rgba(0, 0, 0, 0.7)",
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+    zIndex: 15,
+  },
+  cameraPositionText: {
+    fontSize: 12,
+    color: "#FFFFFF",
+    fontWeight: "500",
+    fontFamily: "monospace",
   },
 });
