@@ -151,28 +151,29 @@ export default function SpaceBottomSheet({ selectedSpace, onClose, onWillClose, 
               {/* Título */}
               <Text style={styles.title}>{selectedSpace.nombre}</Text>
 
-              {/* Descripción */}
+              {/* Descripción (fallback seguro) */}
               <View style={styles.section}>
                 <Text style={styles.sectionTitle}>Descripción:</Text>
-                <Text style={styles.description}>{selectedSpace.descripcion}</Text>
+                <Text style={styles.description}>
+                  {selectedSpace.descripcion?.trim() || "Sin descripción disponible"}
+                </Text>
               </View>
 
-              {/* Categorías */}
-              {selectedSpace.categorias && (
+              {/* Categorías (soporta array de strings u objetos { nombre, color }) */}
+              {Array.isArray(selectedSpace.categorias) && selectedSpace.categorias.length > 0 && (
                 <View style={styles.section}>
                   <Text style={styles.sectionTitle}>Categorías:</Text>
                   <View style={styles.categoriesContainer}>
-                    {selectedSpace.categorias.map((categoria, index) => (
-                      <View
-                        key={index}
-                        style={[
-                          styles.categoryTag,
-                          { backgroundColor: CATEGORY_COLORS[categoria] || "#757575" },
-                        ]}
-                      >
-                        <Text style={styles.categoryText}>{categoria}</Text>
-                      </View>
-                    ))}
+                    {selectedSpace.categorias.map((categoria: any, index: number) => {
+                      const nombre = typeof categoria === "string" ? categoria : categoria?.nombre ?? "Categoría";
+                      const color =
+                        (typeof categoria === "object" && categoria?.color) || CATEGORY_COLORS[nombre] || "#757575";
+                      return (
+                        <View key={`${nombre}-${index}`} style={[styles.categoryTag, { backgroundColor: color }]}>
+                          <Text style={styles.categoryText}>{nombre}</Text>
+                        </View>
+                      );
+                    })}
                   </View>
                 </View>
               )}
