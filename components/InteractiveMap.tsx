@@ -289,21 +289,8 @@ export default function InteractiveMap() {
   const espacioSeleccionado = useMemo(() => {
     if (!selected) return null;
     const espacio = espacios.find((e) => e.id.toString() === selected);
-    // console.log("🔍 Buscando espacio con ID:", selected);
-    // console.log("📦 Espacio encontrado:", espacio);
     return espacio || null;
   }, [selected, espacios]);
-
-  // // Debug cuando se selecciona un espacio
-  // useEffect(() => {
-  //   if (selected) {
-  //     console.log("✅ Espacio seleccionado:", selected);
-  //     console.log(
-  //       "📊 Espacios disponibles:",
-  //       espacios.map((e) => e.id)
-  //     );
-  //   }
-  // }, [selected, espacios]);
 
   const screenWidth = Math.round(Dimensions.get("window").width);
   const screenHeight = Math.round(Dimensions.get("window").height);
@@ -331,14 +318,6 @@ export default function InteractiveMap() {
       >
         <Svg width={MAP_W} height={MAP_H} viewBox={`0 0 ${MAP_W} ${MAP_H}`}>
           <G id="Group 1">
-            {/* Marcador de origen (0,0) */}
-            <Circle cx={0} cy={0} r={5} fill="red" opacity={0.7} />
-            <Line x1={-10} y1={0} x2={10} y2={0} stroke="red" strokeWidth={2} opacity={0.7} />
-            <Line x1={0} y1={-10} x2={0} y2={10} stroke="red" strokeWidth={2} opacity={0.7} />
-            <SvgText x={12} y={-8} fontSize={10} fill="red" opacity={0.7}>
-              (0,0)
-            </SvgText>
-            
             {/* Espacios con colores de la paleta */}
             <Rect
               id="secretaria_asuntos_universitarios"
