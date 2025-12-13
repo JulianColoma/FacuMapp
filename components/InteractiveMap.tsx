@@ -252,6 +252,41 @@ export default function InteractiveMap() {
     setSearchQuery("");
     Keyboard.dismiss();
     setSelectionVersion((v) => v + 1);
+    
+    // Centrar cámara en el espacio seleccionado
+    const zone = ZONES.find(z => z.id === id);
+    if (zone) {
+      const spaceCenterX = zone.x + zone.w / 2;
+      const spaceCenterY = zone.y + zone.h / 2;
+      
+      const screenWidth = Dimensions.get("window").width;
+      const screenHeight = Dimensions.get("window").height;
+      
+      const translateXValue = -(spaceCenterX - screenWidth / 2);
+      const translateYValue = -(spaceCenterY - screenHeight / 3);
+      
+      Animated.parallel([
+        Animated.timing(translateX, {
+          toValue: translateXValue,
+          duration: 500,
+          useNativeDriver: false,
+        }),
+        Animated.timing(translateY, {
+          toValue: translateYValue,
+          duration: 500,
+          useNativeDriver: false,
+        }),
+        Animated.timing(scale, {
+          toValue: 1,
+          duration: 500,
+          useNativeDriver: false,
+        }),
+      ]).start(() => {
+        lastTx.current = translateXValue;
+        lastTy.current = translateYValue;
+        lastScale.current = 1;
+      });
+    }
   };
 
   // Cargar espacios del backend
