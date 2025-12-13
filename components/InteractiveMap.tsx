@@ -35,6 +35,8 @@ const ZONES: Array<{
   w: number;
   h: number;
   r?: number;
+  type?: string;
+  d?: string;
 }> = [
   { id: "1", x: 49, y: 912, w: 48, h: 26, r: 6 },
   { id: "2", x: 49, y: 941, w: 48, h: 31, r: 6 },
@@ -49,7 +51,7 @@ const ZONES: Array<{
   { id: "11", x: 143, y: 928, w: 74, h: 45, r: 8 },
   { id: "12", x: 143, y: 881, w: 74, h: 44, r: 8 },
   { id: "13", x: 143, y: 802, w: 75, h: 44, r: 6 },
-
+  { id: "14", type: "custom", x: 199, y: 761, w: 65, h: 85, d: "M264 846H221V799H199V761H264V846Z" },
   { id: "15", x: 267, y: 796, w: 45, h: 50, r: 6 },
   { id: "16", x: 267, y: 761, w: 45, h: 32, r: 6 },
   { id: "17", x: 49, y: 751, w: 48, h: 72, r: 8 },
@@ -710,34 +712,48 @@ export default function InteractiveMap() {
           </G>
         </Svg>
 
-        {/* Overlays Pressable (fiables con transform) */}
+        {/* Overlays Pressable y SVG (fiables con transform) */}
         <View
           style={styles.overlay}
           pointerEvents={sheetBlocking ? "none" : "auto"} // también bloquea taps en zonas
         >
-          {ZONES.map((z) => (
-            <Pressable
-              key={z.id}
-              style={[
-                styles.zone,
-                {
-                  left: z.x,
-                  top: z.y,
-                  width: z.w,
-                  height: z.h,
-                  borderRadius: z.r ?? 6,
-                  backgroundColor:
-                    highlighted === z.id ? "rgba(56, 220, 38, 0.3)" : "transparent",
-                  borderWidth: highlighted === z.id ? 1 : 0,
-                  borderColor: highlighted === z.id ? COLORS.verde : "transparent",
-                },
-              ]}
-              onPress={() => {
-                openSpace(z.id);
-              }}
-              hitSlop={8}
-            />
-          ))}
+          <Svg width={MAP_W} height={MAP_H} viewBox={`0 0 ${MAP_W} ${MAP_H}`}>
+            {ZONES.map((z) => {
+              if (z.type === "custom" && z.d) {
+                // Zona con forma personalizada (Path)
+                return (
+                  <Path
+                    key={z.id}
+                    d={z.d}
+                    fill={highlighted === z.id ? "rgba(56, 220, 38, 0.3)" : "transparent"}
+                    stroke={highlighted === z.id ? COLORS.verde : "transparent"}
+                    strokeWidth={highlighted === z.id ? 2 : 0}
+                    onPress={() => {
+                      openSpace(z.id);
+                    }}
+                  />
+                );
+              } else {
+                // Zona rectangular normal
+                return (
+                  <Rect
+                    key={z.id}
+                    x={z.x}
+                    y={z.y}
+                    width={z.w}
+                    height={z.h}
+                    rx={z.r ?? 6}
+                    fill={highlighted === z.id ? "rgba(56, 220, 38, 0.3)" : "transparent"}
+                    stroke={highlighted === z.id ? COLORS.verde : "transparent"}
+                    strokeWidth={highlighted === z.id ? 2 : 0}
+                    onPress={() => {
+                      openSpace(z.id);
+                    }}
+                  />
+                );
+              }
+            })}
+          </Svg>
         </View>
       </Animated.View>
 
