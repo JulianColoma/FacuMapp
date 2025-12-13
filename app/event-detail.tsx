@@ -9,13 +9,14 @@ import {
   Text,
   View,
 } from "react-native";
-import { Actividad, Evento, getActividadesByEvento } from "../services/api";
+import { Actividad, Evento, Espacio, getActividadesByEvento, getEspacios } from "../services/api";
 
 export default function EventDetailScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
   const [evento, setEvento] = useState<Evento | null>(null);
   const [actividades, setActividades] = useState<Actividad[]>([]);
+  const [espacios, setEspacios] = useState<Espacio[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingActividades, setLoadingActividades] = useState(true);
 
@@ -43,6 +44,18 @@ export default function EventDetailScreen() {
       setLoadingActividades(false);
     }
   };
+
+  useEffect(() => {
+    const loadEsp = async () => {
+      try {
+        const data = await getEspacios();
+        setEspacios(data);
+      } catch (e) {
+        console.error("Error cargando espacios:", e);
+      }
+    };
+    loadEsp();
+  }, []);
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -137,7 +150,24 @@ export default function EventDetailScreen() {
             </View>
           ) : actividades.length > 0 ? (
             actividades.map((actividad) => (
-              <View key={actividad.id} style={styles.actividadCard}>
+              <Pressable
+                key={actividad.id}
+                style={styles.actividadCard}
+                onPress={() => {
+                  // Navega al mapa y enfoca el espacio
+                  const espacioId =
+                    typeof actividad.id_espacio === "number"
+                      ? actividad.id_espacio
+                      : espacios.find(e => e.nombre === actividad.espacio_nombre)?.id;
+
+                  if (typeof espacioId === "number") {
+                    // Navegar al contenedor de tabs; Expo Router enviará params al hijo index
+                    router.push({ pathname: "/(tabs)", params: { spaceId: String(espacioId), spaceName: actividad.espacio_nombre } });
+                  } else {
+                    console.warn("No se pudo resolver el id del espacio para la actividad", actividad);
+                  }
+                }}
+              >
                 <Text style={styles.actividadNombre}>{actividad.nombre}</Text>
                 <Text style={styles.actividadDescripcion}>
                   {actividad.descripcion}
@@ -159,8 +189,14 @@ export default function EventDetailScreen() {
                       {actividad.hora_inicio} - {actividad.hora_fin}
                     </Text>
                   </View>
+                  <View style={styles.actividadInfoItem}>
+                    <Ionicons name="location-outline" size={16} color="#6B7280" />
+                    <Text style={styles.actividadInfoText}>
+                      {actividad.espacio_nombre || espacios.find(e => e.id === actividad.id_espacio)?.nombre || "Espacio"}
+                    </Text>
+                  </View>
                 </View>
-              </View>
+              </Pressable>
             ))
           ) : (
             <Text style={styles.noActividadesText}>

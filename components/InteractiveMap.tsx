@@ -94,7 +94,7 @@ function clamp(n: number, min: number, max: number) {
   return Math.max(min, Math.min(max, n));
 }
 
-export default function InteractiveMap() {
+export default function InteractiveMap({ initialSpaceId, initialSpaceName }: { initialSpaceId?: string; initialSpaceName?: string }) {
   const [selected, setSelected] = useState<RegionId | null>(null);
   const [highlighted, setHighlighted] = useState<RegionId | null>(null);
   const [espacios, setEspacios] = useState<Espacio[]>([]);
@@ -333,6 +333,49 @@ export default function InteractiveMap() {
 
     loadEspacios();
   }, []);
+
+  // Abrir espacio inicial si viene por navegación (por id o por nombre)
+  useEffect(() => {
+    const tryOpenById = () => {
+      if (!initialSpaceId) return false;
+      const zoneDirect = ZONES.find((z) => z.id === initialSpaceId);
+      if (zoneDirect) {
+        openSpace(zoneDirect.id);
+        return true;
+      }
+      const numId = Number(initialSpaceId);
+      if (!Number.isNaN(numId)) {
+        const zoneByNum = ZONES.find((z) => z.id === String(numId));
+        if (zoneByNum) {
+          openSpace(zoneByNum.id);
+          return true;
+        }
+      }
+      return false;
+    };
+
+    const tryOpenByName = () => {
+      if (!initialSpaceName) return false;
+      const espacio = espacios.find((e) => e.nombre === initialSpaceName);
+      if (espacio) {
+        const zoneByEspId = ZONES.find((z) => z.id === String(espacio.id));
+        if (zoneByEspId) {
+          openSpace(zoneByEspId.id);
+          return true;
+        }
+      }
+      return false;
+    };
+
+    // Intentar por id primero; si no, por nombre
+    const okById = tryOpenById();
+    if (okById) return;
+    const okByName = tryOpenByName();
+    if (okByName) return;
+
+    if (initialSpaceId || initialSpaceName)
+      console.warn("No se encontró zona para:", { initialSpaceId, initialSpaceName });
+  }, [initialSpaceId, initialSpaceName, espacios]);
 
   // Actualizar posición de cámara continuamente
   useEffect(() => {
