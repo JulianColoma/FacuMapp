@@ -1,6 +1,6 @@
 import React from "react";
 import { SafeAreaView, StatusBar } from "react-native";
-import InteractiveMap from "../components/InteractiveMap";
+import InteractiveMap from "../../components/InteractiveMap";
 
 export default function App() {
   return (

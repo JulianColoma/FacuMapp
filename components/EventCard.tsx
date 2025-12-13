@@ -46,11 +46,6 @@ const EventCard: React.FC<EventCardProps> = ({
       <Text style={styles.date}>
         {fechaInicio} - {fechaFin}
       </Text>
-      {espacio && (
-        <Text style={styles.location}>
-          📍 {espacio}
-        </Text>
-      )}
     </Pressable>
   );
 };
@@ -74,13 +69,9 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   date: {
+    paddingVertical: 2,
     fontSize: 14,
     color: "#4B5563",
-  },
-  location: {
-    fontSize: 13,
-    color: "#6B7280",
-    marginTop: 6,
   },
 });
 

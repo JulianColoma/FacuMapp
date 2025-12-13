@@ -2,14 +2,13 @@ import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
-    ActivityIndicator,
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    Text,
-    View,
+  ActivityIndicator,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 import { Actividad, Evento, getActividadesByEvento } from "../services/api";
 
 export default function EventDetailScreen() {
@@ -55,7 +54,7 @@ export default function EventDetailScreen() {
   };
 
   const formatSimpleDate = (dateString: string) => {
-    const parts = dateString.split('-');
+    const parts = dateString.split("-");
     if (parts.length === 3) {
       return `${parts[2]}/${parts[1]}/${parts[0]}`;
     }
@@ -64,43 +63,29 @@ export default function EventDetailScreen() {
 
   if (loading) {
     return (
-      <SafeAreaView style={styles.container}>
+      <View style={styles.container}>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#3B82F6" />
         </View>
-      </SafeAreaView>
+      </View>
     );
   }
 
   if (!evento) {
     return (
-      <SafeAreaView style={styles.container}>
+      <View style={styles.container}>
         <View style={styles.errorContainer}>
           <Text style={styles.errorText}>No se pudo cargar el evento</Text>
-          <Pressable
-            style={styles.backButton}
-            onPress={() => router.back()}
-          >
+          <Pressable style={styles.backButton} onPress={() => router.back()}>
             <Text style={styles.backButtonText}>Volver</Text>
           </Pressable>
         </View>
-      </SafeAreaView>
+      </View>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <Pressable
-          style={styles.backIconButton}
-          onPress={() => router.back()}
-        >
-          <Ionicons name="arrow-back" size={24} color="#1F2937" />
-        </Pressable>
-        <Text style={styles.headerTitle}>Detalle del Evento</Text>
-        <View style={{ width: 24 }} />
-      </View>
-
+    <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.card}>
           <Text style={styles.eventTitle}>{evento.nombre}</Text>
@@ -145,7 +130,7 @@ export default function EventDetailScreen() {
         {/* Sección de Actividades */}
         <View style={styles.actividadesSection}>
           <Text style={styles.actividadesSectionTitle}>Actividades</Text>
-          
+
           {loadingActividades ? (
             <View style={styles.actividadesLoading}>
               <ActivityIndicator size="small" color="#3B82F6" />
@@ -159,7 +144,11 @@ export default function EventDetailScreen() {
                 </Text>
                 <View style={styles.actividadInfo}>
                   <View style={styles.actividadInfoItem}>
-                    <Ionicons name="calendar-outline" size={16} color="#6B7280" />
+                    <Ionicons
+                      name="calendar-outline"
+                      size={16}
+                      color="#6B7280"
+                    />
                     <Text style={styles.actividadInfoText}>
                       {formatSimpleDate(actividad.fecha)}
                     </Text>
@@ -180,7 +169,7 @@ export default function EventDetailScreen() {
           )}
         </View>
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -188,23 +177,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#F3F4F6",
-  },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    padding: 16,
-    backgroundColor: "#fff",
-    borderBottomWidth: 1,
-    borderBottomColor: "#E5E7EB",
-  },
-  backIconButton: {
-    padding: 4,
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: "#1F2937",
   },
   scrollContent: {
     padding: 16,

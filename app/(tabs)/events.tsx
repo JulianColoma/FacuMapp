@@ -1,8 +1,8 @@
 import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import { ActivityIndicator, SafeAreaView, ScrollView, StyleSheet, Text, View } from "react-native";
-import EventCard from "../components/EventCard";
-import { Evento, getEventos } from "../services/api";
+import EventCard from "../../components/EventCard";
+import { Evento, getEventos } from "../../services/api";
 
 export default function InfoScreen() {
   const router = useRouter();
