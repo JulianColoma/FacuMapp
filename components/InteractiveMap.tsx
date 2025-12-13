@@ -320,21 +320,6 @@ export default function InteractiveMap() {
         </View>
       )}
 
-      {/* Indicador de posición de cámara */}
-      <Animated.View style={[
-        styles.cameraPositionContainer,
-        {
-          opacity: 0.9,
-        }
-      ]}>
-        <Text style={styles.cameraPositionText}>
-          X: {Math.round(-cameraPosition.x)} | Y: {Math.round(-cameraPosition.y)} | Zoom: {(cameraPosition.scale).toFixed(2)}x
-        </Text>
-        <Text style={styles.cameraPositionText}>
-          W: {screenWidth}px | H: {screenHeight}px
-        </Text>
-      </Animated.View>
-
       <Animated.View
         collapsable={false}
         pointerEvents={sheetBlocking ? "none" : "auto"}
@@ -735,7 +720,6 @@ export default function InteractiveMap() {
               ]}
               onPress={() => {
                 openSpace(z.id);
-                console.log('Zone details:', z.x, z.y);
               }}
               hitSlop={8}
             />
@@ -844,21 +828,5 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     fontSize: 14,
-  },
-  cameraPositionContainer: {
-    position: "absolute",
-    bottom: 20,
-    right: 20,
-    backgroundColor: "rgba(0, 0, 0, 0.7)",
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 8,
-    zIndex: 15,
-  },
-  cameraPositionText: {
-    fontSize: 12,
-    color: "#FFFFFF",
-    fontWeight: "500",
-    fontFamily: "monospace",
   },
 });
