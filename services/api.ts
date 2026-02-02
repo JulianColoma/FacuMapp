@@ -26,6 +26,7 @@ export interface Actividad {
   hora_inicio: string;
   hora_fin: string;
   id_espacio: number;
+  espacio_nombre: string;
   id_evento: number;
 }
 
