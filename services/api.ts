@@ -1,11 +1,11 @@
-const API_URL = 'http://localhost:3000';
+const API_URL = "http://localhost:3000";
 
 export interface Espacio {
   id: number;
   nombre: string;
   descripcion: string;
   imagen: string;
-  categorias?: any[];  // ← Agregar esta propiedad
+  categorias?: any[];
 }
 
 export interface Evento {
@@ -34,34 +34,48 @@ export const getEspacios = async (): Promise<Espacio[]> => {
   try {
     const response = await fetch(`${API_URL}/espacio`);
     const data = await response.json();
-    console.log('Espacios obtenidos:', data);
+    console.log("Espacios obtenidos:", data);
     return data;
   } catch (error) {
-    console.error('Error al obtener espacios:', error);
+    console.error("Error al obtener espacios:", error);
     throw error;
   }
 };
 
 export const getEventos = async (): Promise<Evento[]> => {
   try {
-    const response = await fetch(`${API_URL}/evento`);
+    const response = await fetch(`${API_URL}/evento?upcoming=true`);
     const data = await response.json();
-    console.log('Eventos obtenidos:', data);
+    console.log("Eventos obtenidos:", data);
     return data;
   } catch (error) {
-    console.error('Error al obtener eventos:', error);
+    console.error("Error al obtener eventos:", error);
     throw error;
   }
 };
 
-export const getActividadesByEvento = async (eventoId: number): Promise<Actividad[]> => {
+export const getActividadesByEvento = async (
+  eventoId: number,
+): Promise<Actividad[]> => {
   try {
     const response = await fetch(`${API_URL}/actividadEv/${eventoId}`);
     const data = await response.json();
-    console.log('Actividades obtenidas:', data);
+    console.log("Actividades obtenidas:", data);
     return data;
   } catch (error) {
-    console.error('Error al obtener actividades:', error);
+    console.error("Error al obtener actividades:", error);
+    throw error;
+  }
+};
+
+export const getCategorias = async (): Promise<any[]> => {
+  try {
+    const response = await fetch(`${API_URL}/categoria`);
+    const data = await response.json();
+    console.log("Categorías obtenidas:", data);
+    return data;
+  } catch (error) {
+    console.error("Error al obtener categorías:", error);
     throw error;
   }
 };
