@@ -1,28 +1,22 @@
-import React, { useMemo, useRef, useState, useEffect } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   Animated,
+  Dimensions,
   GestureResponderEvent,
+  Keyboard,
   PanResponder,
   PanResponderGestureState,
   Pressable,
   StyleSheet,
-  View,
   Text,
-  Keyboard,
-  Dimensions,
+  View,
 } from "react-native";
-import Svg, {
-  G,
-  Path,
-  Rect,
-  Circle,
-  Line,
-  Text as SvgText,
-} from "react-native-svg";
+import Svg, { G, Path, Rect } from "react-native-svg";
+import { COLORS, SPACE_COLORS } from "../constants/colors";
+import { Espacio, getCategorias, getEspacios } from "../services/api";
+import Filters from "./Filters";
 import Searchbar from "./Searchbar";
 import SpaceBottomSheet from "./SpaceBottomSheet";
-import { getEspacios, Espacio } from "../services/api";
-import { COLORS, SPACE_COLORS } from "../constants/colors";
 
 type RegionId = string;
 
@@ -94,12 +88,22 @@ function clamp(n: number, min: number, max: number) {
   return Math.max(min, Math.min(max, n));
 }
 
-export default function InteractiveMap({ initialSpaceId, initialSpaceName }: { initialSpaceId?: string; initialSpaceName?: string }) {
+export default function InteractiveMap({
+  initialSpaceId,
+  initialSpaceName,
+}: {
+  initialSpaceId?: string;
+  initialSpaceName?: string;
+}) {
   const [selected, setSelected] = useState<RegionId | null>(null);
   const [highlighted, setHighlighted] = useState<RegionId | null>(null);
   const [espacios, setEspacios] = useState<Espacio[]>([]);
+  const [categorias, setCategorias] = useState<{ id: string; label: string }[]>(
+    [],
+  );
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [sheetBlocking, setSheetBlocking] = useState(false);
   const [selectionVersion, setSelectionVersion] = useState(0);
@@ -158,7 +162,7 @@ export default function InteractiveMap({ initialSpaceId, initialSpaceName }: { i
         },
         onPanResponderMove: (
           evt: GestureResponderEvent,
-          g: PanResponderGestureState
+          g: PanResponderGestureState,
         ) => {
           const touches = (evt.nativeEvent as any).touches || [];
           if (touches.length >= 2) {
@@ -188,7 +192,7 @@ export default function InteractiveMap({ initialSpaceId, initialSpaceName }: { i
         },
         onPanResponderTerminationRequest: () => true,
       }),
-    []
+    [],
   );
 
   const openSpace = (id: RegionId) => {
@@ -259,17 +263,37 @@ export default function InteractiveMap({ initialSpaceId, initialSpaceName }: { i
     const q = normalize(searchQuery.trim());
     if (!q) return [] as Espacio[];
     const byMatch = espacios.filter((e) =>
-      normalize(e.nombre || "").includes(q)
+      normalize(e.nombre || "").includes(q),
     );
     // Priorizar comienza con "q"
     const starts = byMatch.filter((e) =>
-      normalize(e.nombre || "").startsWith(q)
+      normalize(e.nombre || "").startsWith(q),
     );
     const rest = byMatch.filter(
-      (e) => !normalize(e.nombre || "").startsWith(q)
+      (e) => !normalize(e.nombre || "").startsWith(q),
     );
     return [...starts, ...rest].slice(0, 8);
   }, [espacios, searchQuery]);
+
+  // Calcular espacios que coinciden con la categoría seleccionada
+  const highlightedByCategory = useMemo(() => {
+    if (!selectedCategory) return [];
+
+    return espacios
+      .filter((espacio) => {
+        if (!espacio.categorias || !Array.isArray(espacio.categorias)) {
+          return false;
+        }
+        // Buscar si alguna categoría del espacio coincide con la seleccionada
+        return espacio.categorias.some((cat: any) => {
+          const catId =
+            cat.id?.toString() ||
+            cat.nombre?.toLowerCase().replace(/\s+/g, "_");
+          return catId === selectedCategory;
+        });
+      })
+      .map((espacio) => espacio.id.toString());
+  }, [espacios, selectedCategory]);
 
   const handleSelectSuggestion = (id: RegionId) => {
     setSelected(id);
@@ -334,6 +358,29 @@ export default function InteractiveMap({ initialSpaceId, initialSpaceName }: { i
     loadEspacios();
   }, []);
 
+  // Cargar categorías del backend
+  useEffect(() => {
+    const loadCategorias = async () => {
+      try {
+        const data = await getCategorias();
+        // Transformar datos del backend al formato esperado por Filters
+        const categoriasFormateadas = data.map((cat: any) => ({
+          id:
+            cat.id?.toString() ||
+            cat.nombre?.toLowerCase().replace(/\s+/g, "_") ||
+            "",
+          label: cat.nombre || cat.label || "",
+        }));
+        setCategorias(categoriasFormateadas);
+        console.log("✅ Categorías cargadas:", categoriasFormateadas);
+      } catch (error) {
+        console.error("❌ Error cargando categorías:", error);
+      }
+    };
+
+    loadCategorias();
+  }, []);
+
   // Abrir espacio inicial si viene por navegación (por id o por nombre)
   useEffect(() => {
     const tryOpenById = () => {
@@ -374,7 +421,10 @@ export default function InteractiveMap({ initialSpaceId, initialSpaceName }: { i
     if (okByName) return;
 
     if (initialSpaceId || initialSpaceName)
-      console.warn("No se encontró zona para:", { initialSpaceId, initialSpaceName });
+      console.warn("No se encontró zona para:", {
+        initialSpaceId,
+        initialSpaceName,
+      });
   }, [initialSpaceId, initialSpaceName, espacios]);
 
   // Actualizar posición de cámara continuamente
@@ -793,12 +843,23 @@ export default function InteractiveMap({ initialSpaceId, initialSpaceName }: { i
                     key={z.id}
                     d={z.d}
                     fill={
-                      highlighted === z.id
+                      highlighted === z.id ||
+                      highlightedByCategory.includes(z.id)
                         ? "rgba(56, 220, 38, 0.3)"
                         : "transparent"
                     }
-                    stroke={highlighted === z.id ? COLORS.verde : "transparent"}
-                    strokeWidth={highlighted === z.id ? 2 : 0}
+                    stroke={
+                      highlighted === z.id ||
+                      highlightedByCategory.includes(z.id)
+                        ? COLORS.verde
+                        : "transparent"
+                    }
+                    strokeWidth={
+                      highlighted === z.id ||
+                      highlightedByCategory.includes(z.id)
+                        ? 2
+                        : 0
+                    }
                     onPress={() => {
                       openSpace(z.id);
                     }}
@@ -815,12 +876,23 @@ export default function InteractiveMap({ initialSpaceId, initialSpaceName }: { i
                     height={z.h}
                     rx={z.r ?? 6}
                     fill={
-                      highlighted === z.id
+                      highlighted === z.id ||
+                      highlightedByCategory.includes(z.id)
                         ? "rgba(56, 220, 38, 0.3)"
                         : "transparent"
                     }
-                    stroke={highlighted === z.id ? COLORS.verde : "transparent"}
-                    strokeWidth={highlighted === z.id ? 2 : 0}
+                    stroke={
+                      highlighted === z.id ||
+                      highlightedByCategory.includes(z.id)
+                        ? COLORS.verde
+                        : "transparent"
+                    }
+                    strokeWidth={
+                      highlighted === z.id ||
+                      highlightedByCategory.includes(z.id)
+                        ? 2
+                        : 0
+                    }
                     onPress={() => {
                       openSpace(z.id);
                     }}
@@ -832,10 +904,19 @@ export default function InteractiveMap({ initialSpaceId, initialSpaceName }: { i
         </View>
       </Animated.View>
 
-      {/* Searchbar flotante como en el componente old */}
+      {/* Searchbar + Filters flotantes */}
       <View style={styles.searchbarContainer} pointerEvents="box-none">
-        <Searchbar onSearchChange={handleSearchChange} />
+        <View style={styles.searchRow}>
+          <View style={styles.searchWrapper}>
+            <Searchbar onSearchChange={handleSearchChange} />
+          </View>
 
+          <Filters
+            categories={categorias}
+            selectedCategory={selectedCategory}
+            onSelectCategory={setSelectedCategory}
+          />
+        </View>
         {showSuggestions && (
           <View style={styles.suggestionsContainer} pointerEvents="auto">
             {suggestions.length === 0 ? (
@@ -933,5 +1014,14 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     fontSize: 14,
+  },
+  searchRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 16,
+  },
+  searchWrapper: {
+    flex: 1,
+    marginRight: 0,
   },
 });
