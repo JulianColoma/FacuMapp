@@ -11,8 +11,8 @@ import {
   Text,
   View,
 } from "react-native";
-import Svg, { G, Path } from "react-native-svg";
-import { COLORS } from "../constants/colors";
+import Svg, { G, Path, Rect } from "react-native-svg";
+import { COLORS, SPACE_COLORS } from "../constants/colors";
 import { Espacio, getCategorias, getEspacios } from "../services/api";
 import Filters from "./Filters";
 import Searchbar from "./Searchbar";
@@ -150,9 +150,14 @@ export default function InteractiveMap({
     const zone = ZONES.find((z) => z.id === id);
     if (!zone) return;
 
-    // Calcular el centro del espacio
-    const spaceCenterX = zone.x + zone.w / 2;
-    const spaceCenterY = zone.y + zone.h / 2;
+    // Calcular el centro del espacio (manejar zonas rectangulares y con path)
+    const x = zone.x ?? zone.boundingBox?.x ?? 0;
+    const y = zone.y ?? zone.boundingBox?.y ?? 0;
+    const w = zone.w ?? zone.boundingBox?.width ?? 0;
+    const h = zone.h ?? zone.boundingBox?.height ?? 0;
+    
+    const spaceCenterX = x + w / 2;
+    const spaceCenterY = y + h / 2;
 
     // Calcular la traslación para centrar el espacio en la pantalla
     const screenWidth = Dimensions.get("window").width;
@@ -252,8 +257,13 @@ export default function InteractiveMap({
     // Centrar cámara en el espacio seleccionado
     const zone = ZONES.find((z) => z.id === id);
     if (zone) {
-      const spaceCenterX = zone.x + zone.w / 2;
-      const spaceCenterY = zone.y + zone.h / 2;
+      const x = zone.x ?? zone.boundingBox?.x ?? 0;
+      const y = zone.y ?? zone.boundingBox?.y ?? 0;
+      const w = zone.w ?? zone.boundingBox?.width ?? 0;
+      const h = zone.h ?? zone.boundingBox?.height ?? 0;
+      
+      const spaceCenterX = x + w / 2;
+      const spaceCenterY = y + h / 2;
 
       const screenWidth = Dimensions.get("window").width;
       const screenHeight = Dimensions.get("window").height;
@@ -432,31 +442,38 @@ export default function InteractiveMap({
           style={styles.overlay}
           pointerEvents={sheetBlocking ? "none" : "auto"}
         >
-          {ZONES.map((zone) => (
-            <Pressable
-              key={zone.id}
-              onPress={() => openSpace(zone.id)}
-              style={{
-                position: "absolute",
-                left: zone.x,
-                top: zone.y,
-                width: zone.w,
-                height: zone.h,
-                borderRadius: zone.r ?? 6,
-                backgroundColor:
-                  highlighted === zone.id ||
-                  highlightedByCategory.includes(zone.id)
-                    ? "rgba(56, 220, 38, 0.3)"
-                    : "rgba(33, 150, 243, 0.15)",
-                borderWidth: 1,
-                borderColor:
-                  highlighted === zone.id ||
-                  highlightedByCategory.includes(zone.id)
-                    ? COLORS.verde
-                    : "rgba(33, 150, 243, 0.3)",
-              }}
-            />
-          ))}
+          {ZONES.filter((zone) => zone.pressable).map((zone) => {
+            // Determinar posición y tamaño según tipo de zona
+            const left = zone.x ?? zone.boundingBox?.x ?? 0;
+            const top = zone.y ?? zone.boundingBox?.y ?? 0;
+            const width = zone.w ?? zone.boundingBox?.width ?? 0;
+            const height = zone.h ?? zone.boundingBox?.height ?? 0;
+
+            return (
+              <Pressable
+                key={zone.id}
+                onPress={() => openSpace(zone.id)}
+                style={{
+                  position: "absolute",
+                  left,
+                  top,
+                  width,
+                  height,
+                  backgroundColor:
+                    highlighted === zone.id ||
+                    highlightedByCategory.includes(zone.id)
+                      ? "rgba(56, 220, 38, 0.3)"
+                      : "rgba(33, 150, 243, 0.15)",
+                  borderWidth: 1,
+                  borderColor:
+                    highlighted === zone.id ||
+                    highlightedByCategory.includes(zone.id)
+                      ? COLORS.verde
+                      : "rgba(33, 150, 243, 0.3)",
+                }}
+              />
+            );
+          })}
         </View>
       </Animated.View>
 
