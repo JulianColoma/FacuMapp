@@ -19,10 +19,13 @@ import Searchbar from "./Searchbar";
 import SpaceBottomSheet from "./SpaceBottomSheet";
 import { ZONES } from "../data/zones";
 
-// Parsear path SVG simple (M, L, Z) a array de puntos
+// Parsear path SVG simple (M, L, H, V, Z) a array de puntos
 function parseSVGPath(pathData: string): Array<{ x: number; y: number }> {
   const points: Array<{ x: number; y: number }> = [];
-  const commands = pathData.match(/[MLZ][^MLZ]*/g) || [];
+  const commands = pathData.match(/[MLHVZ][^MLHVZ]*/g) || [];
+
+  let currentX = 0;
+  let currentY = 0;
 
   commands.forEach((cmd) => {
     const type = cmd[0];
@@ -30,15 +33,37 @@ function parseSVGPath(pathData: string): Array<{ x: number; y: number }> {
       .slice(1)
       .trim()
       .split(/[\s,]+/)
-      .map(Number);
+      .map(Number)
+      .filter((n) => !isNaN(n));
 
-    if (type === "M" || type === "L") {
-      for (let i = 0; i < coords.length; i += 2) {
-        if (!isNaN(coords[i]) && !isNaN(coords[i + 1])) {
-          points.push({ x: coords[i], y: coords[i + 1] });
-        }
+    if (type === "M") {
+      // Move to absolute coordinates
+      if (coords.length >= 2) {
+        currentX = coords[0];
+        currentY = coords[1];
+        points.push({ x: currentX, y: currentY });
+      }
+    } else if (type === "L") {
+      // Line to absolute coordinates
+      if (coords.length >= 2) {
+        currentX = coords[0];
+        currentY = coords[1];
+        points.push({ x: currentX, y: currentY });
+      }
+    } else if (type === "H") {
+      // Horizontal line to (solo cambia X)
+      if (coords.length >= 1) {
+        currentX = coords[0];
+        points.push({ x: currentX, y: currentY });
+      }
+    } else if (type === "V") {
+      // Vertical line to (solo cambia Y)
+      if (coords.length >= 1) {
+        currentY = coords[0];
+        points.push({ x: currentX, y: currentY });
       }
     }
+    // Z (close path) no añade puntos, solo indica que se cierre
   });
 
   return points;
@@ -531,8 +556,12 @@ export default function InteractiveMap({
                   key={zone.id}
                   d={zone.path!}
                   fill={
-                    selected === zone.id ? "rgba(56, 220, 38, 0.3)" : zone.fill || "rgba(33, 150, 243, 0.15)"
+                    selected === zone.id
+                      ? "rgba(56, 220, 38, 0.3)"
+                      : zone.fill || "rgba(33, 150, 243, 0.15)"
                   }
+                  stroke={selected === zone.id ? COLORS.verde : "rgba(33, 150, 243, 0.3)"}
+                  strokeWidth={1}
                 />
               ))}
           </Svg>
@@ -576,44 +605,38 @@ export default function InteractiveMap({
               );
             })}
 
-          {/* Zonas interactivas usando Pressables mapeados */}
-          <View
-            style={styles.overlay}
-            pointerEvents={sheetBlocking ? "none" : "auto"}
-          >
-            {ZONES.filter((zone) => zone.pressable).map((zone) => {
-              // Determinar posición y tamaño según tipo de zona
-              const left = zone.x ?? zone.boundingBox?.x ?? 0;
-              const top = zone.y ?? zone.boundingBox?.y ?? 0;
-              const width = zone.w ?? zone.boundingBox?.width ?? 0;
-              const height = zone.h ?? zone.boundingBox?.height ?? 0;
+          {/* Zonas presionables rectangulares (Pressables) */}
 
-              return (
-                <Pressable
-                  key={zone.id}
-                  onPress={() => openSpace(zone.id)}
-                  style={{
-                    position: "absolute",
-                    left,
-                    top,
-                    width,
-                    height,
-                    backgroundColor:
-                      highlighted === zone.id ||
-                      highlightedByCategory.includes(zone.id)
-                        ? "rgba(56, 220, 38, 0.3)"
-                        : "rgba(33, 150, 243, 0.15)",
-                    borderWidth: 1,
-                    borderColor:
-                      highlighted === zone.id ||
-                      highlightedByCategory.includes(zone.id)
-                        ? COLORS.verde
-                        : "rgba(33, 150, 243, 0.3)",
-                  }}
-                />
-              );
-            })}
-          </View>
+          {pressableZones
+            .filter(
+              (zone) =>
+                !zone.path && zone.x !== undefined && zone.y !== undefined,
+            )
+            .map((zone) => (
+              <Pressable
+                key={zone.id}
+                onPress={() => openSpace(zone.id)}
+                style={{
+                  position: "absolute",
+                  left: zone.x,
+                  top: zone.y,
+                  width: zone.w,
+                  height: zone.h,
+                  backgroundColor:
+                    highlighted === zone.id ||
+                    highlightedByCategory.includes(zone.id)
+                      ? "rgba(56, 220, 38, 0.3)"
+                      : "rgba(33, 150, 243, 0.15)",
+                  borderWidth: 1,
+                  borderColor:
+                    highlighted === zone.id ||
+                    highlightedByCategory.includes(zone.id)
+                      ? COLORS.verde
+                      : "rgba(33, 150, 243, 0.3)",
+                  opacity: 0.7,
+                }}
+              />
+            ))}
         </View>
       </Animated.View>
 
