@@ -715,6 +715,8 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: COLORS.blanco,
+    justifyContent: "center",
+    alignItems: "center",
     overflow: "hidden",
   },
   // Capa de overlays alineada al SVG (mismas dimensiones base)
