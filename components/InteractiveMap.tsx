@@ -505,9 +505,7 @@ export default function InteractiveMap({
                   <Path
                     key={zone.id}
                     d={zone.path}
-                    fill={zone.fill || "#f0f0f0"}
-                    stroke={zone.stroke || "#333"}
-                    strokeWidth={zone.strokeWidth || 2}
+                    fill={zone.fill || "#000000"}
                   />
                 );
               } else {
@@ -519,9 +517,7 @@ export default function InteractiveMap({
                     y={zone.y}
                     width={zone.w}
                     height={zone.h}
-                    fill={zone.fill || "#f0f0f0"}
-                    stroke={zone.stroke || "#333"}
-                    strokeWidth={zone.strokeWidth || 2}
+                    fill={zone.fill || "#000000"}
                   />
                 );
               }
@@ -535,11 +531,8 @@ export default function InteractiveMap({
                   key={zone.id}
                   d={zone.path!}
                   fill={
-                    selected === zone.id ? "#FF6B6B" : zone.fill || "#6BCB77"
+                    selected === zone.id ? "rgba(56, 220, 38, 0.3)" : zone.fill || "rgba(33, 150, 243, 0.15)"
                   }
-                  stroke={zone.stroke || "#333"}
-                  strokeWidth={zone.strokeWidth || 2}
-                  opacity={0.7}
                 />
               ))}
           </Svg>
