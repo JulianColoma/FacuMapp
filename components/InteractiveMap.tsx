@@ -270,11 +270,11 @@ export default function InteractiveMap({
     ) {
       // Zona rectangular
       targetX = MAP_W / 2 - zona.x - zona.w / 2;
-      targetY = MAP_H / 2 - zona.y - zona.h / 2;
+      targetY = MAP_H / 3 - zona.y - zona.h / 2;
     } else if (zona.boundingBox) {
       // Zona con path - usar boundingBox para centrado
       targetX = MAP_W / 2 - zona.boundingBox.x - zona.boundingBox.width / 2;
-      targetY = MAP_H / 2 - zona.boundingBox.y - zona.boundingBox.height / 2;
+      targetY = MAP_H / 3 - zona.boundingBox.y - zona.boundingBox.height / 2;
     } else {
       // No se puede centrar, salir
       return;
@@ -360,54 +360,12 @@ export default function InteractiveMap({
       .map((espacio) => espacio.id.toString());
   }, [espacios, selectedCategory]);
 
-  const handleSelectSuggestion = (id: string) => {
-    setSelected(id);
-    setHighlighted(id);
-    setSheetBlocking(true);
+  const handleSelectSuggestion = (zoneId: string) => {
     setShowSuggestions(false);
     setSearchQuery("");
     Keyboard.dismiss();
-    setSelectionVersion((v) => v + 1);
 
-    // Centrar cámara en el espacio seleccionado
-    const zone = ZONES.find((z) => z.id === id);
-    if (zone) {
-      const x = zone.x ?? zone.boundingBox?.x ?? 0;
-      const y = zone.y ?? zone.boundingBox?.y ?? 0;
-      const w = zone.w ?? zone.boundingBox?.width ?? 0;
-      const h = zone.h ?? zone.boundingBox?.height ?? 0;
-
-      const spaceCenterX = x + w / 2;
-      const spaceCenterY = y + h / 2;
-
-      const screenWidth = Dimensions.get("window").width;
-      const screenHeight = Dimensions.get("window").height;
-
-      const translateXValue = -(spaceCenterX - screenWidth / 2);
-      const translateYValue = -(spaceCenterY - screenHeight / 3);
-
-      Animated.parallel([
-        Animated.timing(offsetX, {
-          toValue: translateXValue,
-          duration: 500,
-          useNativeDriver: false,
-        }),
-        Animated.timing(offsetY, {
-          toValue: translateYValue,
-          duration: 500,
-          useNativeDriver: false,
-        }),
-        Animated.timing(scale, {
-          toValue: 1,
-          duration: 500,
-          useNativeDriver: false,
-        }),
-      ]).start(() => {
-        lastOffsetX.current = translateXValue;
-        lastOffsetY.current = translateYValue;
-        lastScale.current = 1;
-      });
-    }
+    openSpace(zoneId);
   };
 
   // Cargar espacios del backend
