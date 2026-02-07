@@ -10,7 +10,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { Espacio } from "../services/api";
+import { Espacio, API_URL } from "../services/api";
 
 const { height: SCREEN_HEIGHT } = Dimensions.get("window");
 // Snap points: abierto medio y expandido al tope (90%)
@@ -115,8 +115,6 @@ export default function SpaceBottomSheet({ selectedSpace, onClose, onWillClose, 
       },
     })
   ).current;
-
-  const API_URL = 'http://192.168.0.168:3000';
 
   return (
     <Animated.View
