@@ -560,7 +560,11 @@ export default function InteractiveMap({
                       ? "rgba(56, 220, 38, 0.3)"
                       : zone.fill || "rgba(33, 150, 243, 0.15)"
                   }
-                  stroke={selected === zone.id ? COLORS.verde : "rgba(33, 150, 243, 0.3)"}
+                  stroke={
+                    selected === zone.id
+                      ? COLORS.verde
+                      : "rgba(33, 150, 243, 0.3)"
+                  }
                   strokeWidth={1}
                 />
               ))}
@@ -622,11 +626,11 @@ export default function InteractiveMap({
                   top: zone.y,
                   width: zone.w,
                   height: zone.h,
-                  backgroundColor:
-                    highlighted === zone.id ||
-                    highlightedByCategory.includes(zone.id)
-                      ? "rgba(56, 220, 38, 0.3)"
-                      : "rgba(33, 150, 243, 0.15)",
+                  backgroundColor: zone.fill || "rgba(33, 150, 243, 0.15)",
+                  // highlighted === zone.id ||
+                  // highlightedByCategory.includes(zone.id)
+                  //   ? "rgba(56, 220, 38, 0.3)"
+                  //   : "rgba(33, 150, 243, 0.15)",
                   borderWidth: 1,
                   borderColor:
                     highlighted === zone.id ||
