@@ -1,4 +1,11 @@
-import React, { useEffect, useMemo, useRef, useState, memo, useCallback } from "react";
+import React, {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  memo,
+  useCallback,
+} from "react";
 import {
   Animated,
   Dimensions,
@@ -94,10 +101,10 @@ function isPointInPolygon(
 // Calcular dimensiones del mapa dinámicamente basándose en las zonas
 const calculateMapDimensions = (() => {
   let cached: { width: number; height: number; scale: number } | null = null;
-  
+
   return () => {
     if (cached) return cached;
-    
+
     if (ZONES.length === 0) {
       cached = { width: 300, height: 200, scale: 1 };
       return cached;
@@ -130,7 +137,7 @@ const calculateMapDimensions = (() => {
     // Limitar el tamaño máximo del SVG a 1200px (límite de React Native SVG)
     const MAX_SVG_WIDTH = 1200;
     let scale = 1;
-    
+
     if (maxX > MAX_SVG_WIDTH) {
       scale = MAX_SVG_WIDTH / maxX;
     }
@@ -140,7 +147,7 @@ const calculateMapDimensions = (() => {
       height: Math.ceil(maxY * scale),
       scale: scale,
     };
-    
+
     console.log("Map dimensions:", cached, "Original:", maxX, maxY);
     return cached;
   };
@@ -151,19 +158,25 @@ const { width: MAP_W, height: MAP_H, scale: MAP_SCALE } = mapDims;
 
 // Calcular las dimensiones originales sin escala
 const ORIGINAL_MAP_WIDTH = Math.ceil(
-  Math.max(...ZONES.map(z => {
-    if (z.x !== undefined && z.w !== undefined) return z.x + z.w;
-    if (z.boundingBox) return z.boundingBox.x + z.boundingBox.width;
-    return 0;
-  }), 300)
+  Math.max(
+    ...ZONES.map((z) => {
+      if (z.x !== undefined && z.w !== undefined) return z.x + z.w;
+      if (z.boundingBox) return z.boundingBox.x + z.boundingBox.width;
+      return 0;
+    }),
+    300,
+  ),
 );
 
 const ORIGINAL_MAP_HEIGHT = Math.ceil(
-  Math.max(...ZONES.map(z => {
-    if (z.y !== undefined && z.h !== undefined) return z.y + z.h;
-    if (z.boundingBox) return z.boundingBox.y + z.boundingBox.height;
-    return 0;
-  }), 200)
+  Math.max(
+    ...ZONES.map((z) => {
+      if (z.y !== undefined && z.h !== undefined) return z.y + z.h;
+      if (z.boundingBox) return z.boundingBox.y + z.boundingBox.height;
+      return 0;
+    }),
+    200,
+  ),
 );
 
 console.log("MAP_W:", MAP_W, "MAP_H:", MAP_H, "MAP_SCALE:", MAP_SCALE);
@@ -182,7 +195,9 @@ const RectPressable = memo(({ zone, highlighted, onPress }: any) => (
       top: zone.y,
       width: zone.w,
       height: zone.h,
-      backgroundColor: zone.fill || "rgba(33, 150, 243, 0.15)",
+      backgroundColor: highlighted
+        ? "rgba(56, 220, 38, 0.3)"
+        : "rgba(33, 150, 243, 0.15)",
       borderWidth: 1,
       borderColor: highlighted ? COLORS.verde : "rgba(33, 150, 243, 0.3)",
       opacity: 0.7,
@@ -190,28 +205,30 @@ const RectPressable = memo(({ zone, highlighted, onPress }: any) => (
   />
 ));
 
-const PathPressable = memo(({ zone, boundingBox, polygonPoints, onPress }: any) => (
-  <Pressable
-    onPress={(event) => {
-      const { locationX, locationY } = event.nativeEvent;
-      // locationX/Y ya son relativos al Pressable (que está en boundingBox)
-      // Y polygonPoints ya están escalados
-      const isInside = isPointInPolygon(
-        { x: locationX, y: locationY },
-        polygonPoints,
-      );
-      if (isInside) onPress(zone.id);
-    }}
-    style={{
-      position: "absolute",
-      left: boundingBox.x,
-      top: boundingBox.y,
-      width: boundingBox.width,
-      height: boundingBox.height,
-      backgroundColor: "transparent",
-    }}
-  />
-));
+const PathPressable = memo(
+  ({ zone, boundingBox, polygonPoints, onPress }: any) => (
+    <Pressable
+      onPress={(event) => {
+        const { locationX, locationY } = event.nativeEvent;
+        // locationX/Y ya son relativos al Pressable (que está en boundingBox)
+        // Y polygonPoints ya están escalados
+        const isInside = isPointInPolygon(
+          { x: locationX, y: locationY },
+          polygonPoints,
+        );
+        if (isInside) onPress(zone.id);
+      }}
+      style={{
+        position: "absolute",
+        left: boundingBox.x,
+        top: boundingBox.y,
+        width: boundingBox.width,
+        height: boundingBox.height,
+        backgroundColor: "transparent",
+      }}
+    />
+  ),
+);
 
 function clamp(value: number, min: number, max: number) {
   return Math.max(min, Math.min(max, value));
@@ -239,7 +256,14 @@ export default function InteractiveMap({
   const [selectionVersion, setSelectionVersion] = useState(0);
 
   // Memoizar separación de zonas y parsing de TODOs los paths UNA SOLA VEZ
-  const { nonPressables, pressableRects, pressablePaths, parsedPolygonsMap, scaledZonesMap, nonPressablesOriginal } = useMemo(() => {
+  const {
+    nonPressables,
+    pressableRects,
+    pressablePaths,
+    parsedPolygonsMap,
+    scaledZonesMap,
+    nonPressablesOriginal,
+  } = useMemo(() => {
     const nonPressables: typeof ZONES = [];
     const nonPressablesOriginal: typeof ZONES = [];
     const pressableRects: typeof ZONES = [];
@@ -250,13 +274,13 @@ export default function InteractiveMap({
     ZONES.forEach((zone) => {
       // Escalar zona si es necesario
       const scaledZone = { ...zone };
-      
+
       if (MAP_SCALE !== 1) {
         if (scaledZone.x !== undefined) scaledZone.x *= MAP_SCALE;
         if (scaledZone.y !== undefined) scaledZone.y *= MAP_SCALE;
         if (scaledZone.w !== undefined) scaledZone.w *= MAP_SCALE;
         if (scaledZone.h !== undefined) scaledZone.h *= MAP_SCALE;
-        
+
         if (scaledZone.boundingBox) {
           scaledZone.boundingBox = {
             x: scaledZone.boundingBox.x * MAP_SCALE,
@@ -265,7 +289,7 @@ export default function InteractiveMap({
             height: scaledZone.boundingBox.height * MAP_SCALE,
           };
         }
-        
+
         // Escalar path si existe
         if (scaledZone.path) {
           // Para los paths, no escalamos el string, pero guardamos el factor de escala
@@ -282,35 +306,42 @@ export default function InteractiveMap({
         pressablePaths.push(scaledZone);
         // PARSEAR AQUI UNA SOLA VEZ - luego escalar y trasladar los puntos si necesario
         let points = parseSVGPath(scaledZone.path);
-        
+
         // Copiar los puntos para no mutar el original
-        points = points.map(p => ({ x: p.x, y: p.y }));
-        
+        points = points.map((p) => ({ x: p.x, y: p.y }));
+
         if (MAP_SCALE !== 1) {
           // Escalar todos los puntos del polígono
-          points.forEach(p => {
+          points.forEach((p) => {
             p.x *= MAP_SCALE;
             p.y *= MAP_SCALE;
           });
         }
-        
+
         // Trasladar los puntos para que sean relativos al boundingBox
         if (scaledZone.boundingBox) {
           const offsetX = scaledZone.boundingBox.x;
           const offsetY = scaledZone.boundingBox.y;
-          points.forEach(p => {
+          points.forEach((p) => {
             p.x -= offsetX;
             p.y -= offsetY;
           });
         }
-        
+
         polygonsMap.set(scaledZone.id, points);
       } else if (scaledZone.x !== undefined && scaledZone.y !== undefined) {
         pressableRects.push(scaledZone);
       }
     });
 
-    return { nonPressables, pressableRects, pressablePaths, parsedPolygonsMap: polygonsMap, scaledZonesMap: zonesMap, nonPressablesOriginal };
+    return {
+      nonPressables,
+      pressableRects,
+      pressablePaths,
+      parsedPolygonsMap: polygonsMap,
+      scaledZonesMap: zonesMap,
+      nonPressablesOriginal,
+    };
   }, [MAP_SCALE]);
 
   const offsetX = useRef(new Animated.Value(0)).current;
@@ -422,61 +453,64 @@ export default function InteractiveMap({
     [minX, maxX, minY, maxY],
   );
 
-  const openSpace = useCallback((zoneId: string) => {
-    setSelected(zoneId);
-    setHighlighted(zoneId);
-    setSheetBlocking(true);
-    setSelectionVersion((v) => v + 1);
+  const openSpace = useCallback(
+    (zoneId: string) => {
+      setSelected(zoneId);
+      setHighlighted(zoneId);
+      setSheetBlocking(true);
+      setSelectionVersion((v) => v + 1);
 
-    // Obtener la zona desde el mapa de zonas escaladas
-    const zona = scaledZonesMap.get(zoneId);
-    if (!zona) return;
+      // Obtener la zona desde el mapa de zonas escaladas
+      const zona = scaledZonesMap.get(zoneId);
+      if (!zona) return;
 
-    let targetX: number;
-    let targetY: number;
+      let targetX: number;
+      let targetY: number;
 
-    // Calcular centro según el tipo de zona
-    if (
-      zona.x !== undefined &&
-      zona.y !== undefined &&
-      zona.w !== undefined &&
-      zona.h !== undefined
-    ) {
-      // Zona rectangular
-      targetX = MAP_W / 2 - zona.x - zona.w / 2;
-      targetY = MAP_H / 3 - zona.y - zona.h / 2;
-    } else if (zona.boundingBox) {
-      // Zona con path - usar boundingBox para centrado
-      targetX = MAP_W / 2 - zona.boundingBox.x - zona.boundingBox.width / 2;
-      targetY = MAP_H / 3 - zona.boundingBox.y - zona.boundingBox.height / 2;
-    } else {
-      // No se puede centrar, salir
-      return;
-    }
+      // Calcular centro según el tipo de zona
+      if (
+        zona.x !== undefined &&
+        zona.y !== undefined &&
+        zona.w !== undefined &&
+        zona.h !== undefined
+      ) {
+        // Zona rectangular
+        targetX = MAP_W / 2 - zona.x - zona.w / 2;
+        targetY = MAP_H / 3 - zona.y - zona.h / 2;
+      } else if (zona.boundingBox) {
+        // Zona con path - usar boundingBox para centrado
+        targetX = MAP_W / 2 - zona.boundingBox.x - zona.boundingBox.width / 2;
+        targetY = MAP_H / 3 - zona.boundingBox.y - zona.boundingBox.height / 2;
+      } else {
+        // No se puede centrar, salir
+        return;
+      }
 
-    Animated.parallel([
-      Animated.timing(offsetX, {
-        toValue: targetX,
-        duration: 300,
-        useNativeDriver: false,
-      }),
-      Animated.timing(offsetY, {
-        toValue: targetY,
-        duration: 300,
-        useNativeDriver: false,
-      }),
-      Animated.timing(scale, {
-        toValue: 1,
-        duration: 300,
-        useNativeDriver: false,
-      }),
-    ]).start();
+      Animated.parallel([
+        Animated.timing(offsetX, {
+          toValue: targetX,
+          duration: 300,
+          useNativeDriver: false,
+        }),
+        Animated.timing(offsetY, {
+          toValue: targetY,
+          duration: 300,
+          useNativeDriver: false,
+        }),
+        Animated.timing(scale, {
+          toValue: 1,
+          duration: 300,
+          useNativeDriver: false,
+        }),
+      ]).start();
 
-    lastOffsetX.current = targetX;
-    lastOffsetY.current = targetY;
-    lastScale.current = 1;
-    updateBounds(lastScale.current);
-  }, [offsetX, offsetY, scale, scaledZonesMap]);
+      lastOffsetX.current = targetX;
+      lastOffsetY.current = targetY;
+      lastScale.current = 1;
+      updateBounds(lastScale.current);
+    },
+    [offsetX, offsetY, scale, scaledZonesMap],
+  );
 
   const closeSheet = useCallback(() => {
     setSelected(null);
@@ -663,11 +697,13 @@ export default function InteractiveMap({
           ],
         }}
       >
-        <View style={{ 
-          position: "relative", 
-          width: MAP_W, 
-          height: MAP_H,
-        }}>
+        <View
+          style={{
+            position: "relative",
+            width: MAP_W,
+            height: MAP_H,
+          }}
+        >
           {/* Primero: Zonas no presionables */}
           <Svg
             width={MAP_W}
@@ -702,24 +738,23 @@ export default function InteractiveMap({
             })}
 
             {/* Zonas presionables con path (sin interactividad aun) */}
-            {pressablePaths
-              .map((zone) => (
-                <Path
-                  key={zone.id}
-                  d={zone.path!}
-                  fill={
-                    selected === zone.id
-                      ? "rgba(56, 220, 38, 0.3)"
-                      : zone.fill || "rgba(33, 150, 243, 0.15)"
-                  }
-                  stroke={
-                    selected === zone.id
-                      ? COLORS.verde
-                      : "rgba(33, 150, 243, 0.3)"
-                  }
-                  strokeWidth={1}
-                />
-              ))}
+            {pressablePaths.map((zone) => (
+              <Path
+                key={zone.id}
+                d={zone.path!}
+                fill={
+                  selected === zone.id
+                    ? "rgba(56, 220, 38, 0.3)"
+                    : zone.fill || "rgba(33, 150, 243, 0.15)"
+                }
+                stroke={
+                  selected === zone.id
+                    ? COLORS.verde
+                    : "rgba(33, 150, 243, 0.3)"
+                }
+                strokeWidth={1}
+              />
+            ))}
           </Svg>
 
           {/* Pressables invisibles sobre zonas con path para funcionar en celular */}
