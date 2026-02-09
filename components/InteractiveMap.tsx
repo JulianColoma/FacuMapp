@@ -179,7 +179,6 @@ const ORIGINAL_MAP_HEIGHT = Math.ceil(
   ),
 );
 
-console.log("MAP_W:", MAP_W, "MAP_H:", MAP_H, "MAP_SCALE:", MAP_SCALE);
 const { width: SCREEN_W } = Dimensions.get("window");
 
 const minScale = 0.5;
