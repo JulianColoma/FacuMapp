@@ -719,7 +719,7 @@ export default function InteractiveMap({
                   <Path
                     key={zone.id}
                     d={zone.path}
-                    fill={zone.fill || "#000000"}
+                    fill={zone.fill || "grey"}
                   />
                 );
               } else {
@@ -731,7 +731,7 @@ export default function InteractiveMap({
                     y={zone.y}
                     width={zone.w}
                     height={zone.h}
-                    fill={zone.fill || "#000000"}
+                    fill={zone.fill || "grey"}
                   />
                 );
               }
