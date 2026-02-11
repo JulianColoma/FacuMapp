@@ -191,7 +191,7 @@ export default function EventDetailScreen() {
                   </View>
                   <View style={styles.actividadInfoItem}>
                     <Ionicons name="location-outline" size={16} color="#6B7280" />
-                    <Text style={styles.actividadInfoText}>
+                    <Text style={styles.actividadInfoText} numberOfLines={1} ellipsizeMode="tail">
                       {actividad.espacio_nombre || espacios.find(e => e.id === actividad.id_espacio)?.nombre || "Espacio"}
                     </Text>
                   </View>
@@ -334,10 +334,13 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
+    flexShrink: 1,
+    maxWidth: "100%",
   },
   actividadInfoText: {
     fontSize: 13,
     color: "#6B7280",
+    flexShrink: 1,
   },
   noActividadesText: {
     fontSize: 15,
