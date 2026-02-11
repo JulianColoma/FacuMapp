@@ -735,23 +735,30 @@ export default function InteractiveMap({
             })}
 
             {/* Zonas presionables con path (sin interactividad aun) */}
-            {pressablePaths.map((zone) => (
-              <Path
-                key={zone.id}
-                d={zone.path!}
-                fill={
-                  selected === zone.id
-                    ? "rgba(56, 220, 38, 0.3)"
-                    : zone.fill || "rgba(33, 150, 243, 0.15)"
-                }
-                stroke={
-                  selected === zone.id
-                    ? COLORS.verde
-                    : "rgba(33, 150, 243, 0.3)"
-                }
-                strokeWidth={1}
-              />
-            ))}
+            {pressablePaths.map((zone) => {
+              const isHighlighted =
+                selected === zone.id ||
+                highlighted === zone.id ||
+                highlightedByCategory.includes(zone.id);
+              
+              return (
+                <Path
+                  key={zone.id}
+                  d={zone.path!}
+                  fill={
+                    isHighlighted
+                      ? "rgba(56, 220, 38, 0.3)"
+                      : zone.fill || "rgba(33, 150, 243, 0.15)"
+                  }
+                  stroke={
+                    isHighlighted
+                      ? COLORS.verde
+                      : "rgba(33, 150, 243, 0.3)"
+                  }
+                  strokeWidth={1}
+                />
+              );
+            })}
           </Svg>
 
           {/* Pressables invisibles sobre zonas con path para funcionar en celular */}
