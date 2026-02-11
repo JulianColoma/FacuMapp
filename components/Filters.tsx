@@ -61,6 +61,8 @@ export default function Filters({
             <FlatList
               data={[{ id: "all", label: "Todas" }, ...categories]}
               keyExtractor={(item) => item.id}
+              style={styles.list}
+              showsVerticalScrollIndicator={true}
               renderItem={({ item }) => {
                 const isSelected =
                   (item.id === "all" && selectedCategory === null) ||
@@ -121,6 +123,7 @@ const styles = StyleSheet.create({
 
   popup: {
     width: "85%",
+    maxHeight: "70%",
     backgroundColor: "#FFFFFF",
     borderRadius: 12,
     padding: 16,
@@ -131,6 +134,10 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     marginBottom: 12,
     color: "#111827",
+  },
+
+  list: {
+    flexGrow: 0,
   },
 
   option: {
