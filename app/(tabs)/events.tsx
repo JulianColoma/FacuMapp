@@ -24,7 +24,13 @@ export default function InfoScreen() {
     try {
       setLoading(true);
       const data = await getEventos();
-      setEventos(data);
+      // Ordenar eventos por fecha de inicio (más próximos primero)
+      const sortedData = data.sort((a, b) => {
+        const dateA = new Date(a.fecha_inicio);
+        const dateB = new Date(b.fecha_inicio);
+        return dateA.getTime() - dateB.getTime();
+      });
+      setEventos(sortedData);
     } catch (error) {
       console.error("Error al cargar eventos:", error);
     } finally {
