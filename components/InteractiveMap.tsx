@@ -183,7 +183,7 @@ const minScale = 0.5;
 const maxScale = 3;
 
 // Componentes memorizados para máxima performance
-const RectPressable = memo(({ zone, highlightType, onPress }: any) => {
+const RectPressable = memo(({ zone, highlightType, customColor, onPress }: any) => {
   const getHighlightStyle = () => {
     if (highlightType === 'selected') {
       return {
@@ -192,8 +192,8 @@ const RectPressable = memo(({ zone, highlightType, onPress }: any) => {
       };
     } else if (highlightType === 'category') {
       return {
-        backgroundColor: "rgba(255, 165, 0, 0.3)",
-        borderColor: COLORS.amarillo,
+        bg: customColor + "4D", // Color dinámico con transparencia
+        border: customColor     // Color dinámico sólido
       };
     } else {
       return {
@@ -268,7 +268,7 @@ export default function InteractiveMap({
   );
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<any | null>(null);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [sheetBlocking, setSheetBlocking] = useState(false);
   const [selectionVersion, setSelectionVersion] = useState(0);
@@ -568,24 +568,22 @@ export default function InteractiveMap({
   }, [espacios, searchQuery]);
 
   // Calcular espacios que coinciden con la categoría seleccionada
-  const highlightedByCategory = useMemo(() => {
-    if (!selectedCategory) return [];
+  
+const highlightedByCategory = useMemo(() => {
+  if (!selectedCategory) return []; // Si es null, no resaltamos nada
 
-    return espacios
-      .filter((espacio) => {
-        if (!espacio.categorias || !Array.isArray(espacio.categorias)) {
-          return false;
-        }
-        // Buscar si alguna categoría del espacio coincide con la seleccionada
-        return espacio.categorias.some((cat: any) => {
-          const catId =
-            cat.id?.toString() ||
-            cat.nombre?.toLowerCase().replace(/\s+/g, "_");
-          return catId === selectedCategory;
-        });
-      })
-      .map((espacio) => espacio.id.toString());
-  }, [espacios, selectedCategory]);
+  return espacios
+    .filter((espacio) => {
+      if (!espacio.categorias || !Array.isArray(espacio.categorias)) return false;
+      
+      return espacio.categorias.some((cat: any) => {
+        const catId = cat.id?.toString() || cat.nombre?.toLowerCase().replace(/\s+/g, "_");
+        // COMPARACIÓN: catId contra el ID del objeto seleccionado
+        return catId === selectedCategory.id; 
+      });
+    })
+    .map((espacio) => espacio.id.toString());
+}, [espacios, selectedCategory]);
 
   const handleSelectSuggestion = (zoneId: string) => {
     setShowSuggestions(false);
@@ -616,22 +614,18 @@ export default function InteractiveMap({
   // Cargar categorías del backend
   useEffect(() => {
     const loadCategorias = async () => {
-      try {
-        const data = await getCategorias();
-        // Transformar datos del backend al formato esperado por Filters
-        const categoriasFormateadas = data.map((cat: any) => ({
-          id:
-            cat.id?.toString() ||
-            cat.nombre?.toLowerCase().replace(/\s+/g, "_") ||
-            "",
-          label: cat.nombre || cat.label || "",
-        }));
-        setCategorias(categoriasFormateadas);
-        console.log("✅ Categorías cargadas:", categoriasFormateadas);
-      } catch (error) {
-        console.error("❌ Error cargando categorías:", error);
-      }
-    };
+  try {
+    const data = await getCategorias();
+    const categoriasFormateadas = data.map((cat: any) => ({
+      id: cat.id?.toString() || cat.nombre?.toLowerCase().replace(/\s+/g, "_"),
+      label: cat.nombre || cat.label || "",
+      color: cat.color || "#FACC15", 
+    }));
+    setCategorias(categoriasFormateadas);
+  } catch (error) {
+    console.error("❌ Error cargando categorías:", error);
+  }
+};
 
     loadCategorias();
   }, []);
@@ -766,10 +760,10 @@ export default function InteractiveMap({
               if (isSelected) {
                 fill = "rgba(56, 220, 38, 0.3)";
                 stroke = COLORS.verde;
-              } else if (isCategory) {
-                fill = "rgba(255, 165, 0, 0.3)";
-                stroke = COLORS.amarillo;
-              }
+              } else if (isCategory && selectedCategory) {
+                  fill = selectedCategory.color + "4D"; 
+                  stroke = selectedCategory.color;
+              } 
               
               return (
                 <Path
@@ -813,6 +807,7 @@ export default function InteractiveMap({
                 key={zone.id}
                 zone={zone}
                 highlightType={highlightType}
+                customColor={selectedCategory?.color}
                 onPress={() => openSpace(zone.id)}
               />
             );

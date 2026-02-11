@@ -9,15 +9,17 @@ import {
   View,
 } from "react-native";
 
-type Category = {
+// Actualizamos el tipo para incluir el color
+export type Category = {
   id: string;
   label: string;
+  color?: string; // Hexadecimal opcional
 };
 
 interface FiltersProps {
   categories: Category[];
-  selectedCategory: string | null;
-  onSelectCategory: (categoryId: string | null) => void;
+  selectedCategory: Category | null; // Ahora es el objeto
+  onSelectCategory: (category: Category | null) => void; // Devuelve el objeto
 }
 
 export default function Filters({
@@ -27,23 +29,34 @@ export default function Filters({
 }: FiltersProps) {
   const [visible, setVisible] = useState(false);
 
-  const handleSelect = (id: string | null) => {
-    onSelectCategory(id);
+  const handleSelect = (item: Category | { id: string; label: string }) => {
+    if (item.id === "all") {
+      onSelectCategory(null);
+    } else {
+      // Pasamos el objeto completo de la categoría
+      onSelectCategory(item as Category);
+    }
     setVisible(false);
   };
 
   return (
     <>
-      {/* ICONO */}
       <TouchableOpacity
-        style={styles.iconButton}
+        style={[
+          styles.iconButton,
+          // Si hay algo seleccionado, podemos dar un feedback visual en el botón
+          selectedCategory && { borderColor: selectedCategory.color || "#2563EB", borderWidth: 2 }
+        ]}
         onPress={() => setVisible(true)}
         activeOpacity={0.8}
       >
-        <Ionicons name="filter" size={22} color="#6B7280" />
+        <Ionicons 
+          name="filter" 
+          size={22} 
+          color={selectedCategory ? (selectedCategory.color || "#2563EB") : "#6B7280"} 
+        />
       </TouchableOpacity>
 
-      {/* POPUP */}
       <Modal
         visible={visible}
         transparent
@@ -59,33 +72,46 @@ export default function Filters({
             <Text style={styles.title}>Filtrar por categoría</Text>
 
             <FlatList
-              data={[{ id: "all", label: "Todas" }, ...categories]}
+              data={[{ id: "all", label: "Todas" } as Category, ...categories]}
               keyExtractor={(item) => item.id}
               style={styles.list}
-              showsVerticalScrollIndicator={true}
               renderItem={({ item }) => {
                 const isSelected =
                   (item.id === "all" && selectedCategory === null) ||
-                  item.id === selectedCategory;
+                  item.id === selectedCategory?.id;
 
                 return (
                   <TouchableOpacity
                     style={[styles.option, isSelected && styles.optionSelected]}
-                    onPress={() =>
-                      handleSelect(item.id === "all" ? null : item.id)
-                    }
+                    onPress={() => handleSelect(item)}
                   >
-                    <Text
-                      style={[
-                        styles.optionText,
-                        isSelected && styles.optionTextSelected,
-                      ]}
-                    >
-                      {item.label}
-                    </Text>
+                    <View style={styles.optionContent}>
+                      {/* Círculo de color al lado del texto */}
+                      {item.id !== "all" && (
+                        <View 
+                          style={[
+                            styles.colorDot, 
+                            { backgroundColor: item.color || "#CCC" }
+                          ]} 
+                        />
+                      )}
+                      
+                      <Text
+                        style={[
+                          styles.optionText,
+                          isSelected && styles.optionTextSelected,
+                        ]}
+                      >
+                        {item.label}
+                      </Text>
+                    </View>
 
                     {isSelected && (
-                      <Ionicons name="checkmark" size={18} color="#2563EB" />
+                      <Ionicons 
+                        name="checkmark" 
+                        size={18} 
+                        color={item.color || "#2563EB"} 
+                      />
                     )}
                   </TouchableOpacity>
                 );
@@ -99,69 +125,66 @@ export default function Filters({
 }
 
 const styles = StyleSheet.create({
+  // ... (Tus estilos base se mantienen)
   iconButton: {
-    height: 48,
-    width: 48,
-    borderRadius: 24,
-    backgroundColor: "#FFFFFF",
-    alignItems: "center",
-    justifyContent: "center",
-    marginLeft: 8,
-
+    padding: 8,
+    borderRadius: 10,
+    backgroundColor: '#FFF',
+    elevation: 2,
     shadowColor: "#000",
-    shadowOpacity: 0.08,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 1.41,
   },
-
   overlay: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.3)",
+    backgroundColor: "rgba(0,0,0,0.5)",
     justifyContent: "center",
     alignItems: "center",
   },
-
   popup: {
-    width: "85%",
+    width: "80%",
+    backgroundColor: "white",
+    borderRadius: 20,
+    padding: 20,
     maxHeight: "70%",
-    backgroundColor: "#FFFFFF",
-    borderRadius: 12,
-    padding: 16,
   },
-
   title: {
-    fontSize: 16,
-    fontWeight: "600",
-    marginBottom: 12,
-    color: "#111827",
+    fontSize: 18,
+    fontWeight: "bold",
+    marginBottom: 15,
+    color: "#1F2937",
   },
-
   list: {
-    flexGrow: 0,
+    width: "100%",
   },
-
   option: {
     flexDirection: "row",
-    justifyContent: "space-between",
     alignItems: "center",
+    justifyContent: "space-between",
     paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: "#E5E7EB",
+    paddingHorizontal: 10,
+    borderRadius: 10,
   },
-
   optionSelected: {
-    backgroundColor: "#EFF6FF",
+    backgroundColor: "#F3F4F6",
+  },
+  optionContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  colorDot: {
+    width: 12,
+    height: 12,
     borderRadius: 6,
-    paddingHorizontal: 8,
+    marginRight: 10,
   },
-
   optionText: {
-    fontSize: 14,
-    color: "#374151",
+    fontSize: 16,
+    color: "#4B5563",
   },
-
   optionTextSelected: {
-    color: "#2563EB",
+    color: "#111827",
     fontWeight: "600",
   },
 });
