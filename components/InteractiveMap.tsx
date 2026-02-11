@@ -183,24 +183,45 @@ const minScale = 0.5;
 const maxScale = 3;
 
 // Componentes memorizados para máxima performance
-const RectPressable = memo(({ zone, highlighted, onPress }: any) => (
-  <Pressable
-    onPress={onPress}
-    style={{
-      position: "absolute",
-      left: zone.x,
-      top: zone.y,
-      width: zone.w,
-      height: zone.h,
-      backgroundColor: highlighted
-        ? "rgba(56, 220, 38, 0.3)"
-        : "rgba(33, 150, 243, 0.15)",
-      borderWidth: 1,
-      borderColor: highlighted ? COLORS.verde : "rgba(33, 150, 243, 0.3)",
-      opacity: 0.7,
-    }}
-  />
-));
+const RectPressable = memo(({ zone, highlightType, onPress }: any) => {
+  const getHighlightStyle = () => {
+    if (highlightType === 'selected') {
+      return {
+        backgroundColor: "rgba(56, 220, 38, 0.3)",
+        borderColor: COLORS.verde,
+      };
+    } else if (highlightType === 'category') {
+      return {
+        backgroundColor: "rgba(255, 165, 0, 0.3)",
+        borderColor: COLORS.amarillo,
+      };
+    } else {
+      return {
+        backgroundColor: "rgba(33, 150, 243, 0.15)",
+        borderColor: "rgba(33, 150, 243, 0.3)",
+      };
+    }
+  };
+
+  const style = getHighlightStyle();
+
+  return (
+    <Pressable
+      onPress={onPress}
+      style={{
+        position: "absolute",
+        left: zone.x,
+        top: zone.y,
+        width: zone.w,
+        height: zone.h,
+        backgroundColor: style.backgroundColor,
+        borderWidth: 1,
+        borderColor: style.borderColor,
+        opacity: 0.7,
+      }}
+    />
+  );
+});
 
 const PathPressable = memo(
   ({ zone, boundingBox, polygonPoints, onPress }: any) => (
@@ -736,25 +757,26 @@ export default function InteractiveMap({
 
             {/* Zonas presionables con path (sin interactividad aun) */}
             {pressablePaths.map((zone) => {
-              const isHighlighted =
-                selected === zone.id ||
-                highlighted === zone.id ||
-                highlightedByCategory.includes(zone.id);
+              const isSelected = selected === zone.id || highlighted === zone.id;
+              const isCategory = highlightedByCategory.includes(zone.id);
+              
+              let fill = zone.fill || "rgba(33, 150, 243, 0.15)";
+              let stroke = "rgba(33, 150, 243, 0.3)";
+              
+              if (isSelected) {
+                fill = "rgba(56, 220, 38, 0.3)";
+                stroke = COLORS.verde;
+              } else if (isCategory) {
+                fill = "rgba(255, 165, 0, 0.3)";
+                stroke = COLORS.amarillo;
+              }
               
               return (
                 <Path
                   key={zone.id}
                   d={zone.path!}
-                  fill={
-                    isHighlighted
-                      ? "rgba(56, 220, 38, 0.3)"
-                      : zone.fill || "rgba(33, 150, 243, 0.15)"
-                  }
-                  stroke={
-                    isHighlighted
-                      ? COLORS.verde
-                      : "rgba(33, 150, 243, 0.3)"
-                  }
+                  fill={fill}
+                  stroke={stroke}
                   strokeWidth={1}
                 />
               );
@@ -775,17 +797,26 @@ export default function InteractiveMap({
             ))}
 
           {/* Zonas presionables rectangulares (Pressables) */}
-          {pressableRects.map((zone) => (
-            <RectPressable
-              key={zone.id}
-              zone={zone}
-              highlighted={
-                highlighted === zone.id ||
-                highlightedByCategory.includes(zone.id)
-              }
-              onPress={() => openSpace(zone.id)}
-            />
-          ))}
+          {pressableRects.map((zone) => {
+            const isSelected = highlighted === zone.id;
+            const isCategory = highlightedByCategory.includes(zone.id);
+            
+            let highlightType = 'none';
+            if (isSelected) {
+              highlightType = 'selected';
+            } else if (isCategory) {
+              highlightType = 'category';
+            }
+            
+            return (
+              <RectPressable
+                key={zone.id}
+                zone={zone}
+                highlightType={highlightType}
+                onPress={() => openSpace(zone.id)}
+              />
+            );
+          })}
         </View>
       </Animated.View>
 

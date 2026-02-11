@@ -1,6 +1,7 @@
 export const COLORS = {
   verde: '#38dc26ff',
   verde_claro: '#e2fee3ff',
+  amarillo: '#FFA500ff',
   gris: '#afafafff',
   blanco: '#ffffffff',
 
