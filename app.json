@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "pruebita",
-    "slug": "pruebita",
+    "name": "Facumapp",
+    "slug": "Facumapp",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "pruebita",
+    "scheme": "facumapp",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
