@@ -192,8 +192,8 @@ const RectPressable = memo(({ zone, highlightType, customColor, onPress }: any) 
       };
     } else if (highlightType === 'category') {
       return {
-        bg: customColor + "4D", // Color dinámico con transparencia
-        border: customColor     // Color dinámico sólido
+        backgroundColor: customColor + "4D", // Color dinámico con transparencia
+        borderColor: customColor     // Color dinámico sólido
       };
     } else {
       return {
@@ -760,7 +760,7 @@ const highlightedByCategory = useMemo(() => {
               if (isSelected) {
                 fill = "rgba(56, 220, 38, 0.3)";
                 stroke = COLORS.verde;
-              } else if (isCategory && selectedCategory) {
+              } else if (isCategory) {
                   fill = selectedCategory.color + "4D"; 
                   stroke = selectedCategory.color;
               } 
