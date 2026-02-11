@@ -1,26 +1,29 @@
 import { Ionicons } from "@expo/vector-icons";
-import React, { useState } from "react";
+import React from "react";
 import { TextInput, TouchableOpacity, View } from "react-native";
 
 interface SearchbarProps {
   onSearchChange?: (text: string) => void;
   placeholder?: string;
+  value?: string;
+  onClear?: () => void;
 }
 
 export default function Searchbar({
   onSearchChange,
   placeholder = "Buscar espacios...",
+  value = "",
+  onClear,
 }: SearchbarProps) {
-  const [searchText, setSearchText] = useState("");
+  const searchText = value;
 
   const handleChangeText = (text: string) => {
-    setSearchText(text);
     onSearchChange?.(text);
   };
 
   const handleClear = () => {
-    setSearchText("");
     onSearchChange?.("");
+    onClear?.();
   };
 
   return (
@@ -61,8 +64,8 @@ const styles = {
     alignItems: "center" as const,
     backgroundColor: "#FFFFFF",
     borderRadius: 24,
-    paddingHorizontal: 16,  
-    paddingVertical: 8,  
+    paddingHorizontal: 16,
+    paddingVertical: 8,
     shadowColor: "#000",
     shadowOffset: {
       width: 0,
@@ -77,7 +80,7 @@ const styles = {
   },
   input: {
     flex: 1,
-    fontSize: 15,  
+    fontSize: 15,
     color: "#1F2937",
   },
   clearButton: {

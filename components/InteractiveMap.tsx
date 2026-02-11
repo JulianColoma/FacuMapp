@@ -1,30 +1,28 @@
 import React, {
+  memo,
+  useCallback,
   useEffect,
   useMemo,
   useRef,
   useState,
-  memo,
-  useCallback,
 } from "react";
 import {
   Animated,
   Dimensions,
-  GestureResponderEvent,
   Keyboard,
   PanResponder,
-  PanResponderGestureState,
   Pressable,
   StyleSheet,
   Text,
   View,
 } from "react-native";
 import Svg, { Path, Rect } from "react-native-svg";
-import { COLORS, SPACE_COLORS } from "../constants/colors";
+import { COLORS } from "../constants/colors";
+import { ZONES } from "../data/zones";
 import { Espacio, getCategorias, getEspacios } from "../services/api";
 import Filters from "./Filters";
 import Searchbar from "./Searchbar";
 import SpaceBottomSheet from "./SpaceBottomSheet";
-import { ZONES } from "../data/zones";
 
 // Parsear path SVG simple (M, L, H, V, Z) a array de puntos
 function parseSVGPath(pathData: string): Array<{ x: number; y: number }> {
@@ -788,7 +786,10 @@ export default function InteractiveMap({
       <View style={styles.searchbarContainer} pointerEvents="box-none">
         <View style={styles.searchRow}>
           <View style={styles.searchWrapper}>
-            <Searchbar onSearchChange={handleSearchChange} />
+            <Searchbar
+              onSearchChange={handleSearchChange}
+              value={searchQuery}
+            />
           </View>
 
           <Filters
