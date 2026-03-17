@@ -18,7 +18,7 @@ import {
 } from "react-native";
 import Svg, { Path, Rect } from "react-native-svg";
 import { COLORS } from "../constants/colors";
-import { ZONES } from "../data/zones";
+import { ZONES } from "../data/zones2";
 import { Espacio, getCategorias, getEspacios } from "../services/api";
 import Filters from "./Filters";
 import Searchbar from "./Searchbar";
@@ -183,45 +183,47 @@ const minScale = 0.5;
 const maxScale = 3;
 
 // Componentes memorizados para máxima performance
-const RectPressable = memo(({ zone, highlightType, customColor, onPress }: any) => {
-  const getHighlightStyle = () => {
-    if (highlightType === 'selected') {
-      return {
-        backgroundColor: "rgba(56, 220, 38, 0.3)",
-        borderColor: COLORS.verde,
-      };
-    } else if (highlightType === 'category') {
-      return {
-        backgroundColor: customColor + "4D", // Color dinámico con transparencia
-        borderColor: customColor     // Color dinámico sólido
-      };
-    } else {
-      return {
-        backgroundColor: "rgba(33, 150, 243, 0.15)",
-        borderColor: "rgba(33, 150, 243, 0.3)",
-      };
-    }
-  };
+const RectPressable = memo(
+  ({ zone, highlightType, customColor, onPress }: any) => {
+    const getHighlightStyle = () => {
+      if (highlightType === "selected") {
+        return {
+          backgroundColor: "rgba(56, 220, 38, 0.3)",
+          borderColor: COLORS.verde,
+        };
+      } else if (highlightType === "category") {
+        return {
+          backgroundColor: customColor + "4D", // Color dinámico con transparencia
+          borderColor: customColor, // Color dinámico sólido
+        };
+      } else {
+        return {
+          backgroundColor: "rgba(33, 150, 243, 0.15)",
+          borderColor: "rgba(33, 150, 243, 0.3)",
+        };
+      }
+    };
 
-  const style = getHighlightStyle();
+    const style = getHighlightStyle();
 
-  return (
-    <Pressable
-      onPress={onPress}
-      style={{
-        position: "absolute",
-        left: zone.x,
-        top: zone.y,
-        width: zone.w,
-        height: zone.h,
-        backgroundColor: style.backgroundColor,
-        borderWidth: 1,
-        borderColor: style.borderColor,
-        opacity: 0.7,
-      }}
-    />
-  );
-});
+    return (
+      <Pressable
+        onPress={onPress}
+        style={{
+          position: "absolute",
+          left: zone.x,
+          top: zone.y,
+          width: zone.w,
+          height: zone.h,
+          backgroundColor: style.backgroundColor,
+          borderWidth: 1,
+          borderColor: style.borderColor,
+          opacity: 0.7,
+        }}
+      />
+    );
+  },
+);
 
 const PathPressable = memo(
   ({ zone, boundingBox, polygonPoints, onPress }: any) => (
@@ -568,22 +570,25 @@ export default function InteractiveMap({
   }, [espacios, searchQuery]);
 
   // Calcular espacios que coinciden con la categoría seleccionada
-  
-const highlightedByCategory = useMemo(() => {
-  if (!selectedCategory) return []; // Si es null, no resaltamos nada
 
-  return espacios
-    .filter((espacio) => {
-      if (!espacio.categorias || !Array.isArray(espacio.categorias)) return false;
-      
-      return espacio.categorias.some((cat: any) => {
-        const catId = cat.id?.toString() || cat.nombre?.toLowerCase().replace(/\s+/g, "_");
-        // COMPARACIÓN: catId contra el ID del objeto seleccionado
-        return catId === selectedCategory.id; 
-      });
-    })
-    .map((espacio) => espacio.id.toString());
-}, [espacios, selectedCategory]);
+  const highlightedByCategory = useMemo(() => {
+    if (!selectedCategory) return []; // Si es null, no resaltamos nada
+
+    return espacios
+      .filter((espacio) => {
+        if (!espacio.categorias || !Array.isArray(espacio.categorias))
+          return false;
+
+        return espacio.categorias.some((cat: any) => {
+          const catId =
+            cat.id?.toString() ||
+            cat.nombre?.toLowerCase().replace(/\s+/g, "_");
+          // COMPARACIÓN: catId contra el ID del objeto seleccionado
+          return catId === selectedCategory.id;
+        });
+      })
+      .map((espacio) => espacio.id.toString());
+  }, [espacios, selectedCategory]);
 
   const handleSelectSuggestion = (zoneId: string) => {
     setShowSuggestions(false);
@@ -614,18 +619,20 @@ const highlightedByCategory = useMemo(() => {
   // Cargar categorías del backend
   useEffect(() => {
     const loadCategorias = async () => {
-  try {
-    const data = await getCategorias();
-    const categoriasFormateadas = data.map((cat: any) => ({
-      id: cat.id?.toString() || cat.nombre?.toLowerCase().replace(/\s+/g, "_"),
-      label: cat.nombre || cat.label || "",
-      color: cat.color || "#FACC15", 
-    }));
-    setCategorias(categoriasFormateadas);
-  } catch (error) {
-    console.error("❌ Error cargando categorías:", error);
-  }
-};
+      try {
+        const data = await getCategorias();
+        const categoriasFormateadas = data.map((cat: any) => ({
+          id:
+            cat.id?.toString() ||
+            cat.nombre?.toLowerCase().replace(/\s+/g, "_"),
+          label: cat.nombre || cat.label || "",
+          color: cat.color || "#FACC15",
+        }));
+        setCategorias(categoriasFormateadas);
+      } catch (error) {
+        console.error("❌ Error cargando categorías:", error);
+      }
+    };
 
     loadCategorias();
   }, []);
@@ -751,20 +758,21 @@ const highlightedByCategory = useMemo(() => {
 
             {/* Zonas presionables con path (sin interactividad aun) */}
             {pressablePaths.map((zone) => {
-              const isSelected = selected === zone.id || highlighted === zone.id;
+              const isSelected =
+                selected === zone.id || highlighted === zone.id;
               const isCategory = highlightedByCategory.includes(zone.id);
-              
+
               let fill = zone.fill || "rgba(33, 150, 243, 0.15)";
               let stroke = "rgba(33, 150, 243, 0.3)";
-              
+
               if (isSelected) {
                 fill = "rgba(56, 220, 38, 0.3)";
                 stroke = COLORS.verde;
               } else if (isCategory) {
-                  fill = selectedCategory.color + "4D"; 
-                  stroke = selectedCategory.color;
-              } 
-              
+                fill = selectedCategory.color + "4D";
+                stroke = selectedCategory.color;
+              }
+
               return (
                 <Path
                   key={zone.id}
@@ -794,14 +802,14 @@ const highlightedByCategory = useMemo(() => {
           {pressableRects.map((zone) => {
             const isSelected = highlighted === zone.id;
             const isCategory = highlightedByCategory.includes(zone.id);
-            
-            let highlightType = 'none';
+
+            let highlightType = "none";
             if (isSelected) {
-              highlightType = 'selected';
+              highlightType = "selected";
             } else if (isCategory) {
-              highlightType = 'category';
+              highlightType = "category";
             }
-            
+
             return (
               <RectPressable
                 key={zone.id}
