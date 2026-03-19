@@ -18,7 +18,7 @@ import {
 } from "react-native";
 import Svg, { Path, Rect } from "react-native-svg";
 import { COLORS } from "../constants/colors";
-import { ZONES } from "../data/zones2";
+import { ZONES } from "../data/zones0";
 import { Espacio, getCategorias, getEspacios } from "../services/api";
 import Filters from "./Filters";
 import Searchbar from "./Searchbar";
