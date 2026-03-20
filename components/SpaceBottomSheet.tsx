@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   Animated,
   Dimensions,
@@ -7,15 +7,16 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  TouchableOpacity,
   View,
 } from "react-native";
-import { Espacio, API_URL } from "../services/api";
+import { API_URL, Espacio } from "../services/api";
 
 const { height: SCREEN_HEIGHT } = Dimensions.get("window");
+const SHEET_HEIGHT = SCREEN_HEIGHT * 0.9;
+const SCROLL_BOTTOM_INSET = SCREEN_HEIGHT * 0.35;
 // Snap points: abierto medio y expandido al tope (90%)
-const MAX_TRANSLATE_Y = -SCREEN_HEIGHT * 0.90; // expandido (alto)
-const OPEN_TRANSLATE_Y = -SCREEN_HEIGHT * 0.60; // abierto inicial (un poco más alto)
+const MAX_TRANSLATE_Y = -SCREEN_HEIGHT * 0.9; // expandido (alto)
+const OPEN_TRANSLATE_Y = -SCREEN_HEIGHT * 0.6; // abierto inicial (un poco más alto)
 
 // Permitimos cualquier id de región como string para soportar todos los elementos del SVG
 type RegionId = string;
@@ -28,25 +29,32 @@ interface SpaceInfo {
 }
 
 interface SpaceBottomSheetProps {
-  selectedSpace: Espacio | null;  // ← Espacio completo
+  selectedSpace: Espacio | null; // ← Espacio completo
   onClose: () => void;
   onWillClose?: () => void; // se dispara apenas comienza el cierre
   selectionVersion?: number; // cambia en cada selección para forzar apertura
 }
 
 const CATEGORY_COLORS: Record<string, string> = {
-  "Estructura": "#FB8C00",
-  "Aula": "#E91E63",
-  "Afuera": "#9C27B0",
+  Estructura: "#FB8C00",
+  Aula: "#E91E63",
+  Afuera: "#9C27B0",
 };
 
-export default function SpaceBottomSheet({ selectedSpace, onClose, onWillClose, selectionVersion }: SpaceBottomSheetProps) {
+export default function SpaceBottomSheet({
+  selectedSpace,
+  onClose,
+  onWillClose,
+  selectionVersion,
+}: SpaceBottomSheetProps) {
   const translateY = useRef(new Animated.Value(0)).current;
   const startYRef = useRef(0);
+  const [isExpanded, setIsExpanded] = useState(false);
 
   useEffect(() => {
     // Interrumpir cualquier animación anterior para evitar "tironeos" y delays
     translateY.stopAnimation(() => {
+      setIsExpanded(false);
       if (selectedSpace) {
         Animated.spring(translateY, {
           toValue: OPEN_TRANSLATE_Y,
@@ -65,10 +73,10 @@ export default function SpaceBottomSheet({ selectedSpace, onClose, onWillClose, 
     PanResponder.create({
       onStartShouldSetPanResponder: () => true,
       onMoveShouldSetPanResponder: () => true,
-      
+
       onPanResponderGrant: () => {
         translateY.stopAnimation((val?: number) => {
-          startYRef.current = typeof val === 'number' ? val : 0;
+          startYRef.current = typeof val === "number" ? val : 0;
         });
       },
 
@@ -76,19 +84,24 @@ export default function SpaceBottomSheet({ selectedSpace, onClose, onWillClose, 
         const { dy } = gestureState;
         const target = startYRef.current + dy;
         // Limitar entre expandido (MAX_TRANSLATE_Y) y abierto medio (OPEN_TRANSLATE_Y)
-        const newTranslateY = Math.max(MAX_TRANSLATE_Y, Math.min(OPEN_TRANSLATE_Y, target));
+        const newTranslateY = Math.max(
+          MAX_TRANSLATE_Y,
+          Math.min(OPEN_TRANSLATE_Y, target),
+        );
         translateY.setValue(newTranslateY);
       },
-      
+
       onPanResponderRelease: (_event, gestureState) => {
         const { dy, vy } = gestureState;
         const currentY = startYRef.current + dy;
 
         // Umbrales de decisión (solo dos estados de abierto; cerrar solo con gesto fuerte hacia abajo)
         const towardClose = vy > 0.9; // cerrar solo con flick claro hacia abajo
-        const towardExpand = vy < -0.5 || currentY < (OPEN_TRANSLATE_Y + MAX_TRANSLATE_Y) / 2; // más cerca de expandido
+        const towardExpand =
+          vy < -0.5 || currentY < (OPEN_TRANSLATE_Y + MAX_TRANSLATE_Y) / 2; // más cerca de expandido
 
         if (towardClose) {
+          setIsExpanded(false);
           onWillClose?.();
           Animated.spring(translateY, {
             toValue: 0,
@@ -103,17 +116,20 @@ export default function SpaceBottomSheet({ selectedSpace, onClose, onWillClose, 
           Animated.spring(translateY, {
             toValue: MAX_TRANSLATE_Y,
             useNativeDriver: true,
-          }).start();
+          }).start(({ finished }) => {
+            if (finished) setIsExpanded(true);
+          });
           return;
         }
 
         // Snap al punto abierto medio por defecto
+        setIsExpanded(false);
         Animated.spring(translateY, {
           toValue: OPEN_TRANSLATE_Y,
           useNativeDriver: true,
         }).start();
       },
-    })
+    }),
   ).current;
 
   return (
@@ -125,58 +141,83 @@ export default function SpaceBottomSheet({ selectedSpace, onClose, onWillClose, 
         },
       ]}
     >
-      <View style={styles.content} {...panResponder.panHandlers}>
+      <View style={styles.content}>
+        <View style={styles.dragHandle} {...panResponder.panHandlers}>
           {/* Indicador de arrastre */}
           <View style={styles.dragIndicator} />
+        </View>
 
-          {selectedSpace && (
-            <ScrollView showsVerticalScrollIndicator={false}>
-              {/* Imagen placeholder */}
-              <View style={styles.imageContainer}>
-                {selectedSpace.imagen ? (
-                  <Image
-                    source={{ uri: `${API_URL}/uploads/${selectedSpace.imagen}` }}
-                    style={styles.image}
-                    resizeMode="cover"
-                  />
-                ) : (
-                  <View style={styles.imagePlaceholder}>
-                    <Text style={styles.placeholderText}>Imagen no disponible</Text>
-                  </View>
-                )}
-              </View>
+        {selectedSpace && (
+          <ScrollView
+            style={styles.scrollView}
+            contentContainerStyle={styles.scrollContent}
+            showsVerticalScrollIndicator={false}
+            scrollEnabled={isExpanded}
+            nestedScrollEnabled
+          >
+            {/* Imagen placeholder */}
+            <View style={styles.imageContainer}>
+              {selectedSpace.imagen ? (
+                <Image
+                  source={{ uri: `${API_URL}/uploads/${selectedSpace.imagen}` }}
+                  style={styles.image}
+                  resizeMode="cover"
+                />
+              ) : (
+                <View style={styles.imagePlaceholder}>
+                  <Text style={styles.placeholderText}>
+                    Imagen no disponible
+                  </Text>
+                </View>
+              )}
+            </View>
 
-              {/* Título */}
-              <Text style={styles.title}>{selectedSpace.nombre}</Text>
+            {/* Título */}
+            <Text style={styles.title}>{selectedSpace.nombre}</Text>
 
-              {/* Descripción (fallback seguro) */}
-              <View style={styles.section}>
-                <Text style={styles.sectionTitle}>Descripción:</Text>
-                <Text style={styles.description}>
-                  {selectedSpace.descripcion?.trim() || "Sin descripción disponible"}
-                </Text>
-              </View>
+            {/* Descripción (fallback seguro) */}
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Descripción:</Text>
+              <Text style={styles.description}>
+                {selectedSpace.descripcion?.trim() ||
+                  "Sin descripción disponible"}
+              </Text>
+            </View>
 
-              {/* Categorías (soporta array de strings u objetos { nombre, color }) */}
-              {Array.isArray(selectedSpace.categorias) && selectedSpace.categorias.length > 0 && (
+            {/* Categorías (soporta array de strings u objetos { nombre, color }) */}
+            {Array.isArray(selectedSpace.categorias) &&
+              selectedSpace.categorias.length > 0 && (
                 <View style={styles.section}>
                   <Text style={styles.sectionTitle}>Categorías:</Text>
                   <View style={styles.categoriesContainer}>
-                    {selectedSpace.categorias.map((categoria: any, index: number) => {
-                      const nombre = typeof categoria === "string" ? categoria : categoria?.nombre ?? "Categoría";
-                      const color =
-                        (typeof categoria === "object" && categoria?.color) || CATEGORY_COLORS[nombre] || "#757575";
-                      return (
-                        <View key={`${nombre}-${index}`} style={[styles.categoryTag, { backgroundColor: color }]}>
-                          <Text style={styles.categoryText}>{nombre}</Text>
-                        </View>
-                      );
-                    })}
+                    {selectedSpace.categorias.map(
+                      (categoria: any, index: number) => {
+                        const nombre =
+                          typeof categoria === "string"
+                            ? categoria
+                            : (categoria?.nombre ?? "Categoría");
+                        const color =
+                          (typeof categoria === "object" && categoria?.color) ||
+                          CATEGORY_COLORS[nombre] ||
+                          "#757575";
+                        return (
+                          <View
+                            key={`${nombre}-${index}`}
+                            style={[
+                              styles.categoryTag,
+                              { backgroundColor: color },
+                            ]}
+                          >
+                            <Text style={styles.categoryText}>{nombre}</Text>
+                          </View>
+                        );
+                      },
+                    )}
                   </View>
                 </View>
               )}
-            </ScrollView>
-          )}
+          </ScrollView>
+        )}
       </View>
     </Animated.View>
   );
@@ -188,7 +229,7 @@ const styles = StyleSheet.create({
     top: SCREEN_HEIGHT,
     left: 0,
     right: 0,
-    height: SCREEN_HEIGHT,
+    height: SHEET_HEIGHT,
     backgroundColor: "white",
     borderTopLeftRadius: 30,
     borderTopRightRadius: 30,
@@ -200,11 +241,14 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
     elevation: 5,
+    overflow: "hidden",
   },
   content: {
     flex: 1,
-    paddingHorizontal: 20,
-    paddingBottom: 40,
+  },
+  dragHandle: {
+    paddingTop: 12,
+    paddingBottom: 20,
   },
   dragIndicator: {
     width: 40,
@@ -212,8 +256,13 @@ const styles = StyleSheet.create({
     backgroundColor: "#D1D5DB",
     borderRadius: 2,
     alignSelf: "center",
-    marginTop: 12,
-    marginBottom: 20,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingHorizontal: 20,
+    paddingBottom: SCROLL_BOTTOM_INSET,
   },
   imageContainer: {
     width: "95%",
