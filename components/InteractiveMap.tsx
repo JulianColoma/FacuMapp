@@ -955,39 +955,41 @@ export default function InteractiveMap({
         )}
       </View>
 
-      <View
-        style={[
-          styles.floorSelectorContainer,
-          sheetBlocking && styles.floorSelectorContainerRaised,
-        ]}
-        pointerEvents="box-none"
-      >
-        <View style={styles.floorSelectorInner}>
-          {FLOOR_IDS.map((floorId) => {
-            const isActive = activeFloor === floorId;
+      {!selected && (
+        <View
+          style={[
+            styles.floorSelectorContainer,
+            sheetBlocking && styles.floorSelectorContainerRaised,
+          ]}
+          pointerEvents="box-none"
+        >
+          <View style={styles.floorSelectorInner}>
+            {FLOOR_IDS.map((floorId) => {
+              const isActive = activeFloor === floorId;
 
-            return (
-              <Pressable
-                key={`floor-btn-${floorId}`}
-                onPress={() => setActiveFloor(floorId)}
-                style={[
-                  styles.floorButton,
-                  isActive && styles.floorButtonActive,
-                ]}
-              >
-                <Text
+              return (
+                <Pressable
+                  key={`floor-btn-${floorId}`}
+                  onPress={() => setActiveFloor(floorId)}
                   style={[
-                    styles.floorButtonText,
-                    isActive && styles.floorButtonTextActive,
+                    styles.floorButton,
+                    isActive && styles.floorButtonActive,
                   ]}
                 >
-                  {floorId === 0 ? "PB" : String(floorId)}
-                </Text>
-              </Pressable>
-            );
-          })}
+                  <Text
+                    style={[
+                      styles.floorButtonText,
+                      isActive && styles.floorButtonTextActive,
+                    ]}
+                  >
+                    {floorId === 0 ? "PB" : String(floorId)}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
         </View>
-      </View>
+      )}
 
       {/* Bottom Sheet con datos del backend */}
       <SpaceBottomSheet
