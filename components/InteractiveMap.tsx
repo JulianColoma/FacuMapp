@@ -18,11 +18,25 @@ import {
 } from "react-native";
 import Svg, { Path, Rect } from "react-native-svg";
 import { COLORS } from "../constants/colors";
-import { ZONES } from "../data/zones0";
+import { ZONES as ZONES0, Zone } from "../data/zones0";
+import { ZONES as ZONES1 } from "../data/zones1";
+import { ZONES as ZONES2 } from "../data/zones2";
 import { Espacio, getCategorias, getEspacios } from "../services/api";
 import Filters from "./Filters";
 import Searchbar from "./Searchbar";
 import SpaceBottomSheet from "./SpaceBottomSheet";
+
+type FloorMode = 0 | 1 | 2;
+
+const FLOOR_ZONES: Record<FloorMode, Zone[]> = {
+  0: ZONES0,
+  1: ZONES1,
+  2: ZONES2,
+};
+
+const FLOOR_IDS: FloorMode[] = [0, 1, 2];
+const ALL_ZONES: Zone[] = [...ZONES0, ...ZONES1, ...ZONES2];
+const PB_REFERENCE_OPACITY = 0.4;
 
 // Parsear path SVG simple (M, L, H, V, Z) a array de puntos
 function parseSVGPath(pathData: string): Array<{ x: number; y: number }> {
@@ -96,68 +110,67 @@ function isPointInPolygon(
   return inside;
 }
 
-// Calcular dimensiones del mapa dinámicamente basándose en las zonas
-const calculateMapDimensions = (() => {
-  let cached: { width: number; height: number; scale: number } | null = null;
+function calculateMapDimensions(zones: Zone[]) {
+  if (zones.length === 0) {
+    return { width: 300, height: 200, scale: 1 };
+  }
 
-  return () => {
-    if (cached) return cached;
+  let maxX = 0;
+  let maxY = 0;
 
-    if (ZONES.length === 0) {
-      cached = { width: 300, height: 200, scale: 1 };
-      return cached;
+  zones.forEach((zone) => {
+    if (
+      zone.x !== undefined &&
+      zone.y !== undefined &&
+      zone.w !== undefined &&
+      zone.h !== undefined
+    ) {
+      maxX = Math.max(maxX, zone.x + zone.w);
+      maxY = Math.max(maxY, zone.y + zone.h);
     }
-
-    let maxX = 0;
-    let maxY = 0;
-
-    ZONES.forEach((zone) => {
-      if (
-        zone.x !== undefined &&
-        zone.y !== undefined &&
-        zone.w !== undefined &&
-        zone.h !== undefined
-      ) {
-        maxX = Math.max(maxX, zone.x + zone.w);
-        maxY = Math.max(maxY, zone.y + zone.h);
-      }
-      if (zone.boundingBox) {
-        maxX = Math.max(maxX, zone.boundingBox.x + zone.boundingBox.width);
-        maxY = Math.max(maxY, zone.boundingBox.y + zone.boundingBox.height);
-      }
-    });
-
-    if (maxX === 0 || maxY === 0) {
-      cached = { width: 300, height: 200, scale: 1 };
-      return cached;
+    if (zone.boundingBox) {
+      maxX = Math.max(maxX, zone.boundingBox.x + zone.boundingBox.width);
+      maxY = Math.max(maxY, zone.boundingBox.y + zone.boundingBox.height);
     }
+  });
 
-    // Limitar el tamaño máximo del SVG a 1200px (límite de React Native SVG)
-    const MAX_SVG_WIDTH = 1200;
-    let scale = 1;
+  if (maxX === 0 || maxY === 0) {
+    return { width: 300, height: 200, scale: 1 };
+  }
 
-    if (maxX > MAX_SVG_WIDTH) {
-      scale = MAX_SVG_WIDTH / maxX;
-    }
+  // Limitar el tamaño máximo del SVG a 1200px (límite de React Native SVG)
+  const MAX_SVG_WIDTH = 1200;
+  let scale = 1;
 
-    cached = {
-      width: Math.ceil(maxX * scale),
-      height: Math.ceil(maxY * scale),
-      scale: scale,
-    };
+  if (maxX > MAX_SVG_WIDTH) {
+    scale = MAX_SVG_WIDTH / maxX;
+  }
 
-    console.log("Map dimensions:", cached, "Original:", maxX, maxY);
-    return cached;
+  const dims = {
+    width: Math.ceil(maxX * scale),
+    height: Math.ceil(maxY * scale),
+    scale,
   };
-})();
 
-const mapDims = calculateMapDimensions();
+  console.log("Map dimensions:", dims, "Original:", maxX, maxY);
+  return dims;
+}
+
+function findFloorForZone(zoneId: string): FloorMode | null {
+  for (const floor of FLOOR_IDS) {
+    const exists = FLOOR_ZONES[floor].some((zone) => zone.id === zoneId);
+    if (exists) return floor;
+  }
+  return null;
+}
+
+const mapDims = calculateMapDimensions(ALL_ZONES);
 const { width: MAP_W, height: MAP_H, scale: MAP_SCALE } = mapDims;
 
 // Calcular las dimensiones originales sin escala
 const ORIGINAL_MAP_WIDTH = Math.ceil(
   Math.max(
-    ...ZONES.map((z) => {
+    ...ALL_ZONES.map((z) => {
       if (z.x !== undefined && z.w !== undefined) return z.x + z.w;
       if (z.boundingBox) return z.boundingBox.x + z.boundingBox.width;
       return 0;
@@ -168,7 +181,7 @@ const ORIGINAL_MAP_WIDTH = Math.ceil(
 
 const ORIGINAL_MAP_HEIGHT = Math.ceil(
   Math.max(
-    ...ZONES.map((z) => {
+    ...ALL_ZONES.map((z) => {
       if (z.y !== undefined && z.h !== undefined) return z.y + z.h;
       if (z.boundingBox) return z.boundingBox.y + z.boundingBox.height;
       return 0;
@@ -262,6 +275,7 @@ export default function InteractiveMap({
   initialSpaceName?: string;
 }) {
   const [selected, setSelected] = useState<string | null>(null);
+  const [activeFloor, setActiveFloor] = useState<FloorMode>(0);
   const [containerHeight, setContainerHeight] = useState(0);
   const [highlighted, setHighlighted] = useState<string | null>(null);
   const [espacios, setEspacios] = useState<Espacio[]>([]);
@@ -275,23 +289,33 @@ export default function InteractiveMap({
   const [sheetBlocking, setSheetBlocking] = useState(false);
   const [selectionVersion, setSelectionVersion] = useState(0);
 
+  const activeZones = useMemo(() => FLOOR_ZONES[activeFloor], [activeFloor]);
+  const groundReferenceZones = useMemo(() => FLOOR_ZONES[0], []);
+  const showGroundReference = activeFloor !== 0;
+
+  const activePressableZoneIds = useMemo(() => {
+    return new Set(
+      activeZones
+        .filter((zone) => zone.pressable)
+        .map((zone) => String(zone.id)),
+    );
+  }, [activeZones]);
+
   // Memoizar separación de zonas y parsing de TODOs los paths UNA SOLA VEZ
   const {
-    nonPressables,
     pressableRects,
     pressablePaths,
     parsedPolygonsMap,
     scaledZonesMap,
     nonPressablesOriginal,
   } = useMemo(() => {
-    const nonPressables: typeof ZONES = [];
-    const nonPressablesOriginal: typeof ZONES = [];
-    const pressableRects: typeof ZONES = [];
-    const pressablePaths: typeof ZONES = [];
+    const nonPressablesOriginal: Zone[] = [];
+    const pressableRects: Zone[] = [];
+    const pressablePaths: Zone[] = [];
     const polygonsMap = new Map<string, Array<{ x: number; y: number }>>();
-    const zonesMap = new Map<string, any>();
+    const zonesMap = new Map<string, Zone>();
 
-    ZONES.forEach((zone) => {
+    activeZones.forEach((zone) => {
       // Escalar zona si es necesario
       const scaledZone = { ...zone };
 
@@ -320,7 +344,6 @@ export default function InteractiveMap({
       zonesMap.set(scaledZone.id, scaledZone);
 
       if (!scaledZone.pressable) {
-        nonPressables.push(scaledZone);
         nonPressablesOriginal.push(zone);
       } else if (scaledZone.path) {
         pressablePaths.push(scaledZone);
@@ -355,14 +378,13 @@ export default function InteractiveMap({
     });
 
     return {
-      nonPressables,
       pressableRects,
       pressablePaths,
       parsedPolygonsMap: polygonsMap,
       scaledZonesMap: zonesMap,
       nonPressablesOriginal,
     };
-  }, [MAP_SCALE]);
+  }, [activeZones]);
 
   const offsetX = useRef(new Animated.Value(0)).current;
   const offsetY = useRef(new Animated.Value(0)).current;
@@ -534,6 +556,7 @@ export default function InteractiveMap({
 
   const closeSheet = useCallback(() => {
     setSelected(null);
+    setHighlighted(null);
     setSheetBlocking(false);
   }, []);
 
@@ -556,9 +579,12 @@ export default function InteractiveMap({
   const suggestions = useMemo(() => {
     const q = normalize(searchQuery.trim());
     if (!q) return [] as Espacio[];
-    const byMatch = espacios.filter((e) =>
-      normalize(e.nombre || "").includes(q),
-    );
+    const byMatch = espacios.filter((e) => {
+      const id = String(e.id);
+      return (
+        activePressableZoneIds.has(id) && normalize(e.nombre || "").includes(q)
+      );
+    });
     // Priorizar comienza con "q"
     const starts = byMatch.filter((e) =>
       normalize(e.nombre || "").startsWith(q),
@@ -567,7 +593,7 @@ export default function InteractiveMap({
       (e) => !normalize(e.nombre || "").startsWith(q),
     );
     return [...starts, ...rest].slice(0, 8);
-  }, [espacios, searchQuery]);
+  }, [activePressableZoneIds, espacios, searchQuery]);
 
   // Calcular espacios que coinciden con la categoría seleccionada
 
@@ -576,6 +602,7 @@ export default function InteractiveMap({
 
     return espacios
       .filter((espacio) => {
+        if (!activePressableZoneIds.has(espacio.id.toString())) return false;
         if (!espacio.categorias || !Array.isArray(espacio.categorias))
           return false;
 
@@ -588,7 +615,7 @@ export default function InteractiveMap({
         });
       })
       .map((espacio) => espacio.id.toString());
-  }, [espacios, selectedCategory]);
+  }, [activePressableZoneIds, espacios, selectedCategory]);
 
   const handleSelectSuggestion = (zoneId: string) => {
     setShowSuggestions(false);
@@ -639,6 +666,17 @@ export default function InteractiveMap({
 
   // Abrir espacio inicial si viene por navegación (por id o por nombre)
   useEffect(() => {
+    setSelected(null);
+    setHighlighted(null);
+    setSheetBlocking(false);
+    setSelectionVersion((v) => v + 1);
+    setSearchQuery("");
+    setShowSuggestions(false);
+    Keyboard.dismiss();
+  }, [activeFloor]);
+
+  // Abrir espacio inicial si viene por navegación (por id o por nombre)
+  useEffect(() => {
     const tryOpenById = () => {
       if (!initialSpaceId) return false;
       if (scaledZonesMap.has(initialSpaceId)) {
@@ -652,7 +690,20 @@ export default function InteractiveMap({
           openSpace(numIdStr);
           return true;
         }
+
+        const floor = findFloorForZone(numIdStr);
+        if (floor !== null && floor !== activeFloor) {
+          setActiveFloor(floor);
+          return true;
+        }
       }
+
+      const floor = findFloorForZone(initialSpaceId);
+      if (floor !== null && floor !== activeFloor) {
+        setActiveFloor(floor);
+        return true;
+      }
+
       return false;
     };
 
@@ -663,6 +714,12 @@ export default function InteractiveMap({
         const espIdStr = String(espacio.id);
         if (scaledZonesMap.has(espIdStr)) {
           openSpace(espIdStr);
+          return true;
+        }
+
+        const floor = findFloorForZone(espIdStr);
+        if (floor !== null && floor !== activeFloor) {
+          setActiveFloor(floor);
           return true;
         }
       }
@@ -688,9 +745,6 @@ export default function InteractiveMap({
     const espacio = espacios.find((e) => e.id.toString() === selected);
     return espacio || null;
   }, [selected, espacios]);
-
-  const screenWidth = Math.round(Dimensions.get("window").width);
-  const screenHeight = Math.round(Dimensions.get("window").height);
 
   return (
     <View
@@ -723,6 +777,47 @@ export default function InteractiveMap({
             height: MAP_H,
           }}
         >
+          {showGroundReference && (
+            <Svg
+              width={MAP_W}
+              height={MAP_H}
+              viewBox={`0 0 ${ORIGINAL_MAP_WIDTH} ${ORIGINAL_MAP_HEIGHT}`}
+              style={{ position: "absolute", opacity: PB_REFERENCE_OPACITY }}
+            >
+              {groundReferenceZones.map((zone) => {
+                if (zone.path) {
+                  return (
+                    <Path
+                      key={`ground-ref-${zone.id}`}
+                      d={zone.path}
+                      fill={zone.fill || "#334155"}
+                    />
+                  );
+                }
+
+                if (
+                  zone.x !== undefined &&
+                  zone.y !== undefined &&
+                  zone.w !== undefined &&
+                  zone.h !== undefined
+                ) {
+                  return (
+                    <Rect
+                      key={`ground-ref-${zone.id}`}
+                      x={zone.x}
+                      y={zone.y}
+                      width={zone.w}
+                      height={zone.h}
+                      fill={zone.fill || "#64748B"}
+                    />
+                  );
+                }
+
+                return null;
+              })}
+            </Svg>
+          )}
+
           {/* Primero: Zonas no presionables */}
           <Svg
             width={MAP_W}
@@ -736,7 +831,7 @@ export default function InteractiveMap({
                 // Zona irregular con path
                 return (
                   <Path
-                    key={zone.id}
+                    key={`${activeFloor}-${zone.id}`}
                     d={zone.path}
                     fill={zone.fill || "grey"}
                   />
@@ -745,7 +840,7 @@ export default function InteractiveMap({
                 // Zona rectangular
                 return (
                   <Rect
-                    key={zone.id}
+                    key={`${activeFloor}-${zone.id}`}
                     x={zone.x}
                     y={zone.y}
                     width={zone.w}
@@ -775,7 +870,7 @@ export default function InteractiveMap({
 
               return (
                 <Path
-                  key={zone.id}
+                  key={`${activeFloor}-${zone.id}`}
                   d={zone.path!}
                   fill={fill}
                   stroke={stroke}
@@ -790,7 +885,7 @@ export default function InteractiveMap({
             .filter((zone) => zone.boundingBox)
             .map((zone) => (
               <PathPressable
-                key={`pressable-${zone.id}`}
+                key={`pressable-${activeFloor}-${zone.id}`}
                 zone={zone}
                 boundingBox={zone.boundingBox}
                 polygonPoints={parsedPolygonsMap.get(zone.id)}
@@ -812,7 +907,7 @@ export default function InteractiveMap({
 
             return (
               <RectPressable
-                key={zone.id}
+                key={`${activeFloor}-${zone.id}`}
                 zone={zone}
                 highlightType={highlightType}
                 customColor={selectedCategory?.color}
@@ -858,6 +953,40 @@ export default function InteractiveMap({
             )}
           </View>
         )}
+      </View>
+
+      <View
+        style={[
+          styles.floorSelectorContainer,
+          sheetBlocking && styles.floorSelectorContainerRaised,
+        ]}
+        pointerEvents="box-none"
+      >
+        <View style={styles.floorSelectorInner}>
+          {FLOOR_IDS.map((floorId) => {
+            const isActive = activeFloor === floorId;
+
+            return (
+              <Pressable
+                key={`floor-btn-${floorId}`}
+                onPress={() => setActiveFloor(floorId)}
+                style={[
+                  styles.floorButton,
+                  isActive && styles.floorButtonActive,
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.floorButtonText,
+                    isActive && styles.floorButtonTextActive,
+                  ]}
+                >
+                  {floorId === 0 ? "PB" : String(floorId)}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
       </View>
 
       {/* Bottom Sheet con datos del backend */}
@@ -944,5 +1073,46 @@ const styles = StyleSheet.create({
   searchWrapper: {
     flex: 1,
     marginRight: 0,
+  },
+  floorSelectorContainer: {
+    position: "absolute",
+    right: 14,
+    bottom: 24,
+    zIndex: 15,
+  },
+  floorSelectorContainerRaised: {
+    bottom: 160,
+  },
+  floorSelectorInner: {
+    backgroundColor: "rgba(255, 255, 255, 0.95)",
+    borderRadius: 16,
+    padding: 6,
+    gap: 6,
+    borderWidth: 1,
+    borderColor: "#CBD5E1",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.16,
+    shadowRadius: 6,
+    elevation: 6,
+  },
+  floorButton: {
+    minWidth: 44,
+    height: 38,
+    borderRadius: 11,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#FFFFFF",
+  },
+  floorButtonActive: {
+    backgroundColor: COLORS.verde,
+  },
+  floorButtonText: {
+    color: "#0F172A",
+    fontSize: 14,
+    fontWeight: "700",
+  },
+  floorButtonTextActive: {
+    color: "#FFFFFF",
   },
 });
