@@ -1107,7 +1107,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFFFFF",
   },
   floorButtonActive: {
-    backgroundColor: COLORS.verde,
+    backgroundColor: "#2196F3",
   },
   floorButtonText: {
     color: "#0F172A",
