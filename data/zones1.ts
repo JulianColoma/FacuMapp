@@ -44,7 +44,7 @@ export const ZONES: Zone[] = [
   { id: "167", x: 2704, y: 1843, w: 70, h: 71, pressable: true, floor: 1 },
   { id: "170", x: 2704, y: 1917, w: 70, h: 147, pressable: true, floor: 1 },
   {
-    id: "Subtract",
+    id: "156",
     path: "M1877 2211H1788V2157H1816V2134H1877V2211Z",
     boundingBox: { x: 1788, y: 2134, width: 89, height: 77 },
     pressable: true,
