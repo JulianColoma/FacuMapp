@@ -41,21 +41,53 @@ export default function Filters({
 
   return (
     <>
-      <TouchableOpacity
-        style={[
-          styles.iconButton,
-          // Si hay algo seleccionado, podemos dar un feedback visual en el botón
-          selectedCategory && { borderColor: selectedCategory.color || "#2563EB", borderWidth: 2 }
-        ]}
-        onPress={() => setVisible(true)}
-        activeOpacity={0.8}
-      >
-        <Ionicons 
-          name="filter" 
-          size={22} 
-          color={selectedCategory ? (selectedCategory.color || "#2563EB") : "#6B7280"} 
-        />
-      </TouchableOpacity>
+      <View style={{ flexDirection: "row", alignItems: "center" }}>
+        {selectedCategory && (
+          <TouchableOpacity
+            style={[styles.iconButton, { marginRight: 8 }]}
+            onPress={() => onSelectCategory(null)}
+            activeOpacity={0.8}
+          >
+            <View>
+              <Ionicons name="filter" size={22} color="#9CA3AF" />
+              <View
+                style={{
+                  position: "absolute",
+                  top: -2,
+                  right: -4,
+                  backgroundColor: "#FFF",
+                  borderRadius: 10,
+                }}
+              >
+                <Ionicons name="close-circle" size={14} color="#EF4444" />
+              </View>
+            </View>
+          </TouchableOpacity>
+        )}
+
+        <TouchableOpacity
+          style={[
+            styles.iconButton,
+            // Si hay algo seleccionado, podemos dar un feedback visual en el botón
+            selectedCategory && {
+              borderColor: selectedCategory.color || "#2563EB",
+              borderWidth: 2,
+            },
+          ]}
+          onPress={() => setVisible(true)}
+          activeOpacity={0.8}
+        >
+          <Ionicons
+            name="filter"
+            size={22}
+            color={
+              selectedCategory
+                ? selectedCategory.color || "#2563EB"
+                : "#6B7280"
+            }
+          />
+        </TouchableOpacity>
+      </View>
 
       <Modal
         visible={visible}
