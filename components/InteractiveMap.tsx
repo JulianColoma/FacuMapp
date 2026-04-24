@@ -9,6 +9,7 @@ import React, {
 import {
   Animated,
   Dimensions,
+  Easing,
   Keyboard,
   PanResponder,
   Pressable,
@@ -288,6 +289,7 @@ export default function InteractiveMap({
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [sheetBlocking, setSheetBlocking] = useState(false);
   const [selectionVersion, setSelectionVersion] = useState(0);
+  const [pendingSpaceId, setPendingSpaceId] = useState<string | null>(null);
 
   const activeZones = useMemo(() => FLOOR_ZONES[activeFloor], [activeFloor]);
   const groundReferenceZones = useMemo(() => FLOOR_ZONES[0], []);
@@ -531,17 +533,20 @@ export default function InteractiveMap({
       Animated.parallel([
         Animated.timing(offsetX, {
           toValue: targetX,
-          duration: 300,
+          duration: 1500,
+          easing: Easing.out(Easing.cubic),
           useNativeDriver: false,
         }),
         Animated.timing(offsetY, {
           toValue: targetY,
-          duration: 300,
+          duration: 1500,
+          easing: Easing.out(Easing.cubic),
           useNativeDriver: false,
         }),
         Animated.timing(scale, {
           toValue: 1,
-          duration: 300,
+          duration: 1500,
+          easing: Easing.out(Easing.cubic),
           useNativeDriver: false,
         }),
       ]).start();
@@ -576,14 +581,23 @@ export default function InteractiveMap({
     setShowSuggestions(text.trim().length > 0);
   };
 
+  // Función para encontrar el piso de un espacio
+  const getFloorForSpace = useCallback((spaceId: string): FloorMode | null => {
+    for (const floor of FLOOR_IDS) {
+      const exists = FLOOR_ZONES[floor].some((zone) => zone.id === spaceId);
+      if (exists) return floor;
+    }
+    return null;
+  }, []);
+
   const suggestions = useMemo(() => {
     const q = normalize(searchQuery.trim());
     if (!q) return [] as Espacio[];
     const byMatch = espacios.filter((e) => {
       const id = String(e.id);
-      return (
-        activePressableZoneIds.has(id) && normalize(e.nombre || "").includes(q)
-      );
+      // Buscar en TODOS los pisos, no solo el actual
+      const existsInAnyFloor = ALL_ZONES.some((zone) => zone.id === id);
+      return existsInAnyFloor && normalize(e.nombre || "").includes(q);
     });
     // Priorizar comienza con "q"
     const starts = byMatch.filter((e) =>
@@ -593,16 +607,20 @@ export default function InteractiveMap({
       (e) => !normalize(e.nombre || "").startsWith(q),
     );
     return [...starts, ...rest].slice(0, 8);
-  }, [activePressableZoneIds, espacios, searchQuery]);
+  }, [espacios, searchQuery]);
 
-  // Calcular espacios que coinciden con la categoría seleccionada
-
+  // Calcular espacios que coinciden con la categoría seleccionada (en TODOS los pisos)
   const highlightedByCategory = useMemo(() => {
-    if (!selectedCategory) return []; // Si es null, no resaltamos nada
+    if (!selectedCategory) return []; 
 
     return espacios
       .filter((espacio) => {
-        if (!activePressableZoneIds.has(espacio.id.toString())) return false;
+        // CORRECCIÓN: Castear ambos a string
+        const existsInAnyFloor = ALL_ZONES.some(
+          (zone) => String(zone.id) === String(espacio.id), 
+        );
+        if (!existsInAnyFloor) return false;
+
         if (!espacio.categorias || !Array.isArray(espacio.categorias))
           return false;
 
@@ -610,19 +628,48 @@ export default function InteractiveMap({
           const catId =
             cat.id?.toString() ||
             cat.nombre?.toLowerCase().replace(/\s+/g, "_");
-          // COMPARACIÓN: catId contra el ID del objeto seleccionado
           return catId === selectedCategory.id;
         });
       })
-      .map((espacio) => espacio.id.toString());
-  }, [activePressableZoneIds, espacios, selectedCategory]);
+      .map((espacio) => String(espacio.id)); // Se garantiza un array de strings
+  }, [espacios, selectedCategory]);
 
+  // Calcular cantidad de espacios filtrados por piso
+  const filteredCountByFloor = useMemo(() => {
+    if (!selectedCategory) return { 0: 0, 1: 0, 2: 0 };
+
+    const counts: Record<FloorMode, number> = { 0: 0, 1: 0, 2: 0 };
+
+    highlightedByCategory.forEach((zoneId) => {
+      FLOOR_IDS.forEach((floorId) => {
+        // CORRECCIÓN: Castear zone.id y zoneId a string
+        const existsInFloor = FLOOR_ZONES[floorId].some(
+          (zone) => String(zone.id) === String(zoneId),
+        );
+        if (existsInFloor) {
+          counts[floorId]++;
+        }
+      });
+    });
+
+    return counts;
+  }, [highlightedByCategory, selectedCategory]);
+  
   const handleSelectSuggestion = (zoneId: string) => {
     setShowSuggestions(false);
     setSearchQuery("");
     Keyboard.dismiss();
 
-    openSpace(zoneId);
+    // Encontrar el piso donde está este espacio
+    const targetFloor = getFloorForSpace(zoneId);
+    
+    // Si está en otro piso, cambiar primero al piso correcto
+    if (targetFloor !== null && targetFloor !== activeFloor) {
+      setPendingSpaceId(zoneId);
+      setActiveFloor(targetFloor);
+    } else {
+      openSpace(zoneId);
+    }
   };
 
   // Cargar espacios del backend
@@ -674,6 +721,14 @@ export default function InteractiveMap({
     setShowSuggestions(false);
     Keyboard.dismiss();
   }, [activeFloor]);
+
+  // Abrir espacio pendiente después de cambiar de piso
+  useEffect(() => {
+    if (pendingSpaceId && scaledZonesMap.has(pendingSpaceId)) {
+      openSpace(pendingSpaceId);
+      setPendingSpaceId(null);
+    }
+  }, [pendingSpaceId, scaledZonesMap, openSpace]);
 
   // Abrir espacio inicial si viene por navegación (por id o por nombre)
   useEffect(() => {
@@ -854,8 +909,8 @@ export default function InteractiveMap({
             {/* Zonas presionables con path (sin interactividad aun) */}
             {pressablePaths.map((zone) => {
               const isSelected =
-                selected === zone.id || highlighted === zone.id;
-              const isCategory = highlightedByCategory.includes(zone.id);
+                String(selected) === String(zone.id) || String(highlighted) === String(zone.id);
+              const isCategory = highlightedByCategory.includes(String(zone.id));
 
               let fill = zone.fill || "rgba(33, 150, 243, 0.15)";
               let stroke = "rgba(33, 150, 243, 0.3)";
@@ -895,8 +950,9 @@ export default function InteractiveMap({
 
           {/* Zonas presionables rectangulares (Pressables) */}
           {pressableRects.map((zone) => {
-            const isSelected = highlighted === zone.id;
-            const isCategory = highlightedByCategory.includes(zone.id);
+            // CORRECCIÓN: Validar forzando string
+            const isSelected = String(highlighted) === String(zone.id);
+            const isCategory = highlightedByCategory.includes(String(zone.id));
 
             let highlightType = "none";
             if (isSelected) {
@@ -911,7 +967,7 @@ export default function InteractiveMap({
                 zone={zone}
                 highlightType={highlightType}
                 customColor={selectedCategory?.color}
-                onPress={() => openSpace(zone.id)}
+                onPress={() => openSpace(String(zone.id))}
               />
             );
           })}
@@ -941,15 +997,24 @@ export default function InteractiveMap({
                 <Text style={styles.suggestionText}>Sin resultados</Text>
               </View>
             ) : (
-              suggestions.map((esp) => (
-                <Pressable
-                  key={esp.id}
-                  onPress={() => handleSelectSuggestion(esp.id.toString())}
-                  style={styles.suggestionItem}
-                >
-                  <Text style={styles.suggestionText}>{esp.nombre}</Text>
-                </Pressable>
-              ))
+              suggestions.map((esp) => {
+                const floor = getFloorForSpace(esp.id.toString());
+                const floorLabel = floor === null ? "?" : floor === 0 ? "PB" : String(floor);
+                return (
+                  <Pressable
+                    key={esp.id}
+                    onPress={() => handleSelectSuggestion(esp.id.toString())}
+                    style={styles.suggestionItem}
+                  >
+                    <View style={styles.suggestionContent}>
+                      <Text style={styles.suggestionText}>{esp.nombre}</Text>
+                      <View style={styles.floorBadge}>
+                        <Text style={styles.floorBadgeText}>{floorLabel}</Text>
+                      </View>
+                    </View>
+                  </Pressable>
+                );
+              })
             )}
           </View>
         )}
@@ -966,25 +1031,32 @@ export default function InteractiveMap({
           <View style={styles.floorSelectorInner}>
             {FLOOR_IDS.map((floorId) => {
               const isActive = activeFloor === floorId;
+              const filteredCount = selectedCategory ? filteredCountByFloor[floorId] : 0;
 
               return (
-                <Pressable
-                  key={`floor-btn-${floorId}`}
-                  onPress={() => setActiveFloor(floorId)}
-                  style={[
-                    styles.floorButton,
-                    isActive && styles.floorButtonActive,
-                  ]}
-                >
-                  <Text
+                <View key={`floor-btn-${floorId}`} style={styles.floorButtonContainer}>
+                  <Pressable
+                    onPress={() => setActiveFloor(floorId)}
                     style={[
-                      styles.floorButtonText,
-                      isActive && styles.floorButtonTextActive,
+                      styles.floorButton,
+                      isActive && styles.floorButtonActive,
                     ]}
                   >
-                    {floorId === 0 ? "PB" : String(floorId)}
-                  </Text>
-                </Pressable>
+                    <Text
+                      style={[
+                        styles.floorButtonText,
+                        isActive && styles.floorButtonTextActive,
+                      ]}
+                    >
+                      {floorId === 0 ? "PB" : String(floorId)}
+                    </Text>
+                  </Pressable>
+                  {filteredCount > 0 && (
+                    <View style={styles.filterBadge}>
+                      <Text style={styles.filterBadgeText}>{filteredCount}</Text>
+                    </View>
+                  )}
+                </View>
               );
             })}
           </View>
@@ -1106,6 +1178,9 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     backgroundColor: "#FFFFFF",
   },
+  floorButtonContainer: {
+    position: "relative",
+  },
   floorButtonActive: {
     backgroundColor: "#2196F3",
   },
@@ -1116,5 +1191,40 @@ const styles = StyleSheet.create({
   },
   floorButtonTextActive: {
     color: "#FFFFFF",
+  },
+  suggestionContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  floorBadge: {
+    backgroundColor: "#2196F3",
+    borderRadius: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    marginLeft: 8,
+  },
+  floorBadgeText: {
+    color: "#FFFFFF",
+    fontSize: 12,
+    fontWeight: "600",
+  },
+  filterBadge: {
+    position: "absolute",
+    top: -6,
+    right: -6,
+    backgroundColor: "#EF4444",
+    borderRadius: 10,
+    minWidth: 20,
+    height: 20,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 2,
+    borderColor: "#FFFFFF",
+  },
+  filterBadgeText: {
+    color: "#FFFFFF",
+    fontSize: 11,
+    fontWeight: "700",
   },
 });
