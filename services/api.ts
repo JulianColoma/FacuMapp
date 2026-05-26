@@ -1,4 +1,4 @@
-export const API_URL = "https://facumappi.frlp.utn.edu.ar/";
+export const API_URL = "http://192.168.2.127:3000";
 
 export interface Espacio {
   id: number;
@@ -30,10 +30,43 @@ export interface Actividad {
   id_evento: number;
 }
 
+interface PaginatedResponse<T> {
+  items: T[];
+  nextCursor: string | null;
+  hasMore: boolean;
+}
+
+const getPaginated = async <T>(
+  path: string,
+  params: Record<string, string> = {},
+): Promise<T[]> => {
+  const allItems: T[] = [];
+  let cursor: string | null = null;
+  let hasMore = true;
+
+  while (hasMore) {
+    const query = new URLSearchParams({
+      ...params,
+      limit: "50",
+      ...(cursor ? { cursor } : {}),
+    });
+    const response = await fetch(`${API_URL}${path}?${query.toString()}`);
+    const data = await response.json();
+
+    if (Array.isArray(data)) return data;
+
+    const paginated = data as PaginatedResponse<T>;
+    allItems.push(...(paginated.items || []));
+    cursor = paginated.nextCursor;
+    hasMore = Boolean(paginated.hasMore && cursor);
+  }
+
+  return allItems;
+};
+
 export const getEspacios = async (): Promise<Espacio[]> => {
   try {
-    const response = await fetch(`${API_URL}/espacio`);
-    const data = await response.json();
+    const data = await getPaginated<Espacio>("/espacio");
     console.log("Espacios obtenidos:", data);
     return data;
   } catch (error) {
@@ -44,8 +77,7 @@ export const getEspacios = async (): Promise<Espacio[]> => {
 
 export const getEventos = async (): Promise<Evento[]> => {
   try {
-    const response = await fetch(`${API_URL}/evento?upcoming=true`);
-    const data = await response.json();
+    const data = await getPaginated<Evento>("/evento", { upcoming: "true" });
     console.log("Eventos obtenidos:", data);
     return data;
   } catch (error) {
