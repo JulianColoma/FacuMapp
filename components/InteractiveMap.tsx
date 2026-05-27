@@ -290,6 +290,8 @@ export default function InteractiveMap({
   const [sheetBlocking, setSheetBlocking] = useState(false);
   const [selectionVersion, setSelectionVersion] = useState(0);
   const [pendingSpaceId, setPendingSpaceId] = useState<string | null>(null);
+  const handledInitialSpaceKey = useRef<string | null>(null);
+  const initialSpaceKey = `${initialSpaceId ?? ""}|${initialSpaceName ?? ""}`;
 
   const activeZones = useMemo(() => FLOOR_ZONES[activeFloor], [activeFloor]);
   const groundReferenceZones = useMemo(() => FLOOR_ZONES[0], []);
@@ -732,10 +734,18 @@ export default function InteractiveMap({
 
   // Abrir espacio inicial si viene por navegación (por id o por nombre)
   useEffect(() => {
+    if (!initialSpaceId && !initialSpaceName) {
+      handledInitialSpaceKey.current = null;
+      return;
+    }
+
+    if (handledInitialSpaceKey.current === initialSpaceKey) return;
+
     const tryOpenById = () => {
       if (!initialSpaceId) return false;
       if (scaledZonesMap.has(initialSpaceId)) {
         openSpace(initialSpaceId);
+        handledInitialSpaceKey.current = initialSpaceKey;
         return true;
       }
       const numId = Number(initialSpaceId);
@@ -743,19 +753,24 @@ export default function InteractiveMap({
         const numIdStr = String(numId);
         if (scaledZonesMap.has(numIdStr)) {
           openSpace(numIdStr);
+          handledInitialSpaceKey.current = initialSpaceKey;
           return true;
         }
 
         const floor = findFloorForZone(numIdStr);
         if (floor !== null && floor !== activeFloor) {
+          setPendingSpaceId(numIdStr);
           setActiveFloor(floor);
+          handledInitialSpaceKey.current = initialSpaceKey;
           return true;
         }
       }
 
       const floor = findFloorForZone(initialSpaceId);
       if (floor !== null && floor !== activeFloor) {
+        setPendingSpaceId(initialSpaceId);
         setActiveFloor(floor);
+        handledInitialSpaceKey.current = initialSpaceKey;
         return true;
       }
 
@@ -769,12 +784,15 @@ export default function InteractiveMap({
         const espIdStr = String(espacio.id);
         if (scaledZonesMap.has(espIdStr)) {
           openSpace(espIdStr);
+          handledInitialSpaceKey.current = initialSpaceKey;
           return true;
         }
 
         const floor = findFloorForZone(espIdStr);
         if (floor !== null && floor !== activeFloor) {
+          setPendingSpaceId(espIdStr);
           setActiveFloor(floor);
+          handledInitialSpaceKey.current = initialSpaceKey;
           return true;
         }
       }
@@ -792,7 +810,7 @@ export default function InteractiveMap({
         initialSpaceId,
         initialSpaceName,
       });
-  }, [initialSpaceId, initialSpaceName, espacios, scaledZonesMap]);
+  }, [activeFloor, initialSpaceId, initialSpaceKey, initialSpaceName, espacios, scaledZonesMap]);
 
   // Buscar espacio seleccionado with debug
   const espacioSeleccionado = useMemo(() => {
