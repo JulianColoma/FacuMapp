@@ -1,12 +1,13 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   View,
 } from "react-native";
 import { Actividad, Evento, Espacio, getActividadesByEvento, getEspacios } from "../services/api";
@@ -19,6 +20,7 @@ export default function EventDetailScreen() {
   const [espacios, setEspacios] = useState<Espacio[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingActividades, setLoadingActividades] = useState(true);
+  const [activitySearch, setActivitySearch] = useState("");
 
   useEffect(() => {
     if (params.evento) {
@@ -73,6 +75,41 @@ export default function EventDetailScreen() {
     }
     return dateString;
   };
+
+  const normalizeSearchText = (text: string) =>
+    text
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .trim();
+
+  const orderedActividades = useMemo(() => {
+    const query = normalizeSearchText(activitySearch);
+    if (!query) return actividades;
+
+    return [...actividades].sort((a, b) => {
+      const getActivityText = (actividad: Actividad) =>
+        normalizeSearchText(
+          [
+            actividad.nombre,
+            actividad.descripcion,
+            actividad.espacio_nombre,
+            espacios.find((e) => e.id === actividad.id_espacio)?.nombre,
+            formatSimpleDate(actividad.fecha),
+            actividad.hora_inicio,
+            actividad.hora_fin,
+          ]
+            .filter(Boolean)
+            .join(" "),
+        );
+
+      const aMatches = getActivityText(a).includes(query);
+      const bMatches = getActivityText(b).includes(query);
+
+      if (aMatches === bMatches) return 0;
+      return aMatches ? -1 : 1;
+    });
+  }, [activitySearch, actividades, espacios]);
 
   if (loading) {
     return (
@@ -143,13 +180,33 @@ export default function EventDetailScreen() {
         {/* Sección de Actividades */}
         <View style={styles.actividadesSection}>
           <Text style={styles.actividadesSectionTitle}>Actividades</Text>
+          <View style={styles.searchContainer}>
+            <Ionicons name="search" size={20} color="#6B7280" />
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Buscar actividades"
+              placeholderTextColor="#9CA3AF"
+              value={activitySearch}
+              onChangeText={setActivitySearch}
+              autoCapitalize="none"
+              autoCorrect={false}
+            />
+            {activitySearch.length > 0 && (
+              <Pressable
+                style={styles.clearSearchButton}
+                onPress={() => setActivitySearch("")}
+              >
+                <Ionicons name="close-circle" size={20} color="#6B7280" />
+              </Pressable>
+            )}
+          </View>
 
           {loadingActividades ? (
             <View style={styles.actividadesLoading}>
               <ActivityIndicator size="small" color="#3B82F6" />
             </View>
           ) : actividades.length > 0 ? (
-            actividades.map((actividad) => (
+            orderedActividades.map((actividad) => (
               <Pressable
                 key={actividad.id}
                 style={styles.actividadCard}
@@ -295,6 +352,30 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     color: "#1F2937",
     marginBottom: 16,
+  },
+  searchContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    marginBottom: 12,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 15,
+    color: "#1F2937",
+    marginLeft: 8,
+    paddingVertical: 0,
+  },
+  clearSearchButton: {
+    padding: 4,
   },
   actividadesLoading: {
     padding: 20,
