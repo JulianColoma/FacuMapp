@@ -1,4 +1,4 @@
-export const API_URL = "http://192.168.2.127:3000";
+export const API_URL = "https://facumappi.frlp.utn.edu.ar";
 
 export interface Espacio {
   id: number;
